@@ -17,6 +17,9 @@ Note that it requires `yarn` as a dependency. Run:
   cd MYPROJECTNAME
   # If you wish to use git, then run: git commit -a -m "initial commit"
   wget https://raw.githubusercontent.com/flaxandteal/arches-container-toolkit/main/Makefile
+  
+  # Bug: currently a code block needs manually added to urls.py at this point
+  # see make help for details
   make build
   make run
 
@@ -29,6 +32,8 @@ Make sure you have `docker-compose` and either `git`, or `wget` and `tar` availa
 Download only the `Makefile` to your project folder, i.e. the same directory as
 `manage.py`, and run:
 
+  # Bug: currently a code block needs manually added to urls.py at this point
+  # see make help for details
   make build
   make run
 

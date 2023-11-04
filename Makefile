@@ -50,6 +50,7 @@ build: docker
 	# We need to have certain node modules, so if the additional ones are missing, clean the folder to ensure boostrap does so.
 	if [ -z $(ARCHES_PROJECT)/media/node_modules/jquery-validation ]; then rm -rf $(ARCHES_PROJECT)/media/node_modules; fi
 	$(DOCKER_COMPOSE_COMMAND) stop
+	$(DOCKER_COMPOSE_COMMAND) run --entrypoint /web_root/entrypoint.sh arches_worker install_yarn_components
 	$(DOCKER_COMPOSE_COMMAND) run --entrypoint /web_root/entrypoint.sh arches_worker bootstrap
 	$(DOCKER_COMPOSE_COMMAND) stop
 
@@ -90,13 +91,12 @@ help:
 	@echo "If you do not see a project above or it is wrong, ensure that there is exactly one subfolder of this directory with an"
 	@echo "__init__.py file."
 	@echo
-	@echo "Note that '$(ARCHES_PROJECT)/urls.py' must have (manually added) something similar to:"
+	@echo "Note that '$(ARCHES_PROJECT)/urls.py' must have (manually added):"
 	@echo "	if settings.DEBUG:"
 	@echo "	    from django.contrib.staticfiles import views"
 	@echo "	    from django.urls import re_path"
 	@echo "	    urlpatterns += ["
-	@echo "		re_path(r'^static/(?P<path>.*)\$', views.serve),"
-	@echo "	    ]"
+	@echo "		re_path(r'^static/(?P<path>.*)$$', views.serve),"
 	@echo "	    ]"
 	@echo
 	@echo "To run general docker-compose commands, use:"
