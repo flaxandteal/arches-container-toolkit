@@ -5,7 +5,7 @@ on:
   push:
 
 jobs:
-  Check flow:
+  Check-flow:
     runs-on: ubuntu-latest
     container:
       image: docker:dind
