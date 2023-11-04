@@ -6,7 +6,8 @@ TOOLKIT_RELEASE = main
 ARCHES_PROJECT = $(shell ls -1 */__init__.py | head -n 1 | sed 's/\/.*//g')
 ARCHES_BASE = flaxandteal/arches_base
 ARCHES_PROJECT_ROOT = $(shell pwd)/
-
+DOCKER_COMPOSE_COMMAND = ARCHES_PROJECT_ROOT=$(ARCHES_PROJECT_ROOT) ARCHES_BASE=$(ARCHES_BASE) ARCHES_PROJECT=$(ARCHES_PROJECT) docker-compose -p $(ARCHES_PROJECT) -f docker/docker-compose.yml
+CMD ?=
 
 .PHONY: docker
 docker:
@@ -46,16 +47,28 @@ endif
 
 .PHONY: build
 build: docker
-	ARCHES_PROJECT_ROOT=$(ARCHES_PROJECT_ROOT) ARCHES_BASE=$(ARCHES_BASE) ARCHES_PROJECT=$(ARCHES_PROJECT) docker-compose -f docker/docker-compose.yml run --entrypoint /web_root/entrypoint.sh arches_worker bootstrap
+	# We need to have certain node modules, so if the additional ones are missing, clean the folder to ensure boostrap does so.
+	if [ -z $(ARCHES_PROJECT)/media/node_modules/jquery-validation ]; then rm -rf $(ARCHES_PROJECT)/media/node_modules; fi
+	$(DOCKER_COMPOSE_COMMAND) stop
+	$(DOCKER_COMPOSE_COMMAND) run --entrypoint /web_root/entrypoint.sh arches_worker bootstrap
+	$(DOCKER_COMPOSE_COMMAND) stop
+
+.PHONY: down
+down: docker
+	$(DOCKER_COMPOSE_COMMAND) down
 
 .PHONY: run
 run: docker
-	ARCHES_PROJECT_ROOT=$(ARCHES_PROJECT_ROOT) ARCHES_BASE=$(ARCHES_BASE) ARCHES_PROJECT=$(ARCHES_PROJECT) docker-compose -f docker/docker-compose.yml up
+	$(DOCKER_COMPOSE_COMMAND) up
+
+.PHONY: docker-compose
+docker-compose: docker
+	$(DOCKER_COMPOSE_COMMAND) $(CMD)
 
 .PHONY: clean
 clean: docker
 	@echo -n "This will remove all database and elasticsearch data, are you sure? [y/N] " && read confirmation && [ $${confirmation:-N} = y ]
-	ARCHES_PROJECT_ROOT=$(ARCHES_PROJECT_ROOT) ARCHES_BASE=$(ARCHES_BASE) ARCHES_PROJECT=$(ARCHES_PROJECT) docker-compose -f docker/docker-compose.yml down -v --rmi all
+	$(DOCKER_COMPOSE_COMMAND) down -v --rmi all
 
 .PHONY: help
 help:
@@ -87,4 +100,9 @@ help:
 	@echo "	    ]"
 	@echo
 	@echo "To run general docker-compose commands, use:"
-	@echo "  ARCHES_PROJECT_ROOT=$(ARCHES_PROJECT_ROOT) ARCHES_BASE=$(ARCHES_BASE) ARCHES_PROJECT=$(ARCHES_PROJECT) docker-compose -f docker/docker-compose.yml ..."
+	@echo "  make docker-compose CMD='...'"
+	@echo "or:"
+	@echo "  ARCHES_PROJECT_ROOT=$(ARCHES_PROJECT_ROOT) ARCHES_BASE=$(ARCHES_BASE) ARCHES_PROJECT=$(ARCHES_PROJECT) docker-compose -p $(ARCHES_PROJECT) -f docker/docker-compose.yml ..."
+	@echo
+	@echo "For example:"
+	@echo "  make docker-compose CMD='version'"

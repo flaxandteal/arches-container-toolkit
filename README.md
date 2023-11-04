@@ -32,7 +32,8 @@ Download only the `Makefile` to your project folder, i.e. the same directory as
   make build
   make run
 
-Note that it will set up a `./docker` submodule or subfolder by default, to pull in
+The `make build` command will **wipe all data in the (container) Postgres database,
+if one already exists**. Note that it will set up a `./docker` submodule or subfolder by default, to pull in
 the rest of the toolkit, so please make sure you do not have any conflicting folder
 in the same location (there is experimental functionality to change the target folder
 name, but mileage may vary).
