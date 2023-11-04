@@ -1,0 +1,59 @@
+name: Build Arches project
+run-name: Build Arches project
+
+on:
+  push:
+    branches:
+      - develop
+
+env:
+  # Using the 7.5-bug version of the container is throwing an error for an
+  # undefined database column using the previous coral base and postgis seems
+  # to have avoided the problem. TODO: Investigate difference between the two
+  # ARCHES_BASE: ghcr.io/flaxandteal/arches-base-7.5-dev:bug-coral_dockerfile_for_arches_7.4
+  # ARCHES_POSTGIS: ghcr.io/flaxandteal/arches-postgis-7.5-dev:bug-coral_dockerfile_for_arches_7.4
+
+  ARCHES_BASE: flaxandteal/arches_coral_base
+  ARCHES_POSTGIS: flaxandteal/arches_coral_postgres
+  ARCHES_PROJECT: coral
+jobs:
+  Build-Arches-Static:
+    runs-on: ubuntu-latest
+    container:
+      image: docker:dind
+    steps:
+      - run: echo "🎉 The job was automatically triggered by a ${{ github.event_name }} event."
+      - name: Check out repository code
+        uses: actions/checkout@v3
+      - name: Set up Docker Context for Buildx
+        id: buildx-context
+        run: |
+          docker context create builders
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+        with:
+          version: latest
+          endpoint: builders
+          buildkitd-flags: '--allow-insecure-entitlement network.host'
+          driver-opts: |
+              network=host
+      - name: Set up Arches project
+        run:
+          pip install arches
+          arches-project create testproject
+      - name: Check installation
+          cd testproject
+          cp ../Makefile .
+          make docker
+      - name: Add this branch's toolkit
+        run:
+          rm -rf docker
+          ln -s .. docker
+      - name: Check build
+        run:
+          make build
+      - name: Check run
+        run:
+          make run &
+          sleep 20
+          make down
