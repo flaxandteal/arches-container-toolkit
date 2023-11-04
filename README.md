@@ -1,13 +1,17 @@
 # Arches F&T Container Toolkit
 
-This is the toolkit for setting up and managing a new Arches instance.
+This is a toolkit for setting up and managing a new Arches instance.
+
+**PLEASE NOTE: THIS IS AN UNOFFICIAL, ALTERNATIVE CONTAINER TOOLKIT FOR ARCHES**
+
+You probably want [the standard tooling](https://arches.readthedocs.io/en/stable/installing/docker/).
 
 ## Usage
 
 ### I have no existing Arches project
 
-Install the `arches-project` tool as per the [Arches documentation](https://arches.readthedocs.io/en/stable/)
-then run:
+Install the `arches-project` tool as per the [Arches documentation](https://arches.readthedocs.io/en/stable/).
+Note that it requires `yarn` as a dependency. Run:
 
   arches-project create MYPROJECTNAME
   cd MYPROJECTNAME
