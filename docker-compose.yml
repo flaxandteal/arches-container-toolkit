@@ -1,0 +1,148 @@
+version: '3.8'
+services:
+    cantaloupe_afs:
+      image: uclalibrary/cantaloupe:5.0.3-0
+      volumes:
+        - cantaloupe-data:/imageroot
+      ports:
+        - 8183:8182
+      env_file:
+        - ${ARCHES_PROJECT_ROOT}./docker/env_file.env
+
+    arches:
+      restart: unless-stopped
+      entrypoint: ["../entrypoint.sh"]
+      build:
+        context: ${ARCHES_PROJECT_ROOT}.
+        dockerfile: ${ARCHES_PROJECT_ROOT}./docker/Dockerfile
+        args:
+          - ARCHES_PROJECT=$ARCHES_PROJECT
+          - ARCHES_BASE=$ARCHES_BASE
+      command: run_arches
+      volumes:
+        - arches-log:/arches/arches/logs
+        - arches-static:/static_root
+        # $ARCHES_ROOT:/web_root/arches
+        # $ARCHES_ROOT/docker/gunicorn_config.py:/web_root/arches/gunicorn_config.py
+        # ./$ARCHES_PROJECT/media/node_modules/arches/docker/gunicorn_config.py:/web_root/arches/arches/gunicorn_config.py
+        - ${ARCHES_PROJECT_ROOT}.:/web_root/$ARCHES_PROJECT
+        - ${ARCHES_PROJECT_ROOT}./docker/entrypoint.sh:/web_root/entrypoint.sh
+        - ${ARCHES_PROJECT_ROOT}./docker/settings_docker.py:/web_root/$ARCHES_PROJECT/$ARCHES_PROJECT/settings_local.py
+      environment:
+        - ARCHES_PROJECT=$ARCHES_PROJECT
+        - INSTALL_DEFAULT_GRAPHS=False
+        - INSTALL_DEFAULT_CONCEPTS=False
+        - PGUSERNAME=postgres
+        - PGPASSWORD=postgres
+        - PGDBNAME=arches
+        - PGHOST=db
+        - PGPORT=5432
+        - ESHOST=elasticsearch
+        - ESPORT=9200
+        - CELERY_BROKER_URL=amqp://rabbitmq
+        - DJANGO_MODE=PROD
+        - DJANGO_DEBUG=True
+        - DOMAIN_NAMES=localhost
+        - PYTHONUNBUFFERED=0
+        - TZ=PST
+        - ARCHES_ROOT=/web_root/arches
+        - COMPRESS_OFFLINE=False
+        - STATIC_URL=/static/
+        - STATIC_ROOT=/static_root
+        - COMPRESS_ENABLED=True
+        - WEB_ROOT=/web_root
+
+      ports:
+        - '8000:8000'
+      depends_on:
+        - db
+        - elasticsearch
+
+    arches_worker:
+      image: arches_${ARCHES_PROJECT}:latest
+      restart: unless-stopped
+      entrypoint: ["../entrypoint.sh"]
+      build:
+        context: ${ARCHES_PROJECT_ROOT}.
+        dockerfile: ${ARCHES_PROJECT_ROOT}./docker/Dockerfile
+        args:
+          - ARCHES_PROJECT=$ARCHES_PROJECT
+          - ARCHES_BASE=$ARCHES_BASE
+      command: run_celery
+      user: root
+      volumes:
+        - arches-log:/arches/arches/logs
+        - arches-static:/static_root
+        # $ARCHES_ROOT:/web_root/arches
+        # $ARCHES_ROOT/docker/gunicorn_config.py:/web_root/arches/gunicorn_config.py
+        # ./$ARCHES_PROJECT/media/node_modules/arches/docker/gunicorn_config.py:/web_root/arches/arches/gunicorn_config.py
+        - ${ARCHES_PROJECT_ROOT}.:/web_root/$ARCHES_PROJECT
+        - ${ARCHES_PROJECT_ROOT}./docker/entrypoint.sh:/web_root/entrypoint.sh
+        - ${ARCHES_PROJECT_ROOT}./docker/settings_docker.py:/web_root/$ARCHES_PROJECT/$ARCHES_PROJECT/settings_local.py
+      environment:
+        - ARCHES_PROJECT=$ARCHES_PROJECT
+        - INSTALL_DEFAULT_GRAPHS=False
+        - INSTALL_DEFAULT_CONCEPTS=False
+        - PGUSERNAME=postgres
+        - PGPASSWORD=postgres
+        - PGDBNAME=arches
+        - PGHOST=db
+        - PGPORT=5432
+        - ESHOST=elasticsearch
+        - ESPORT=9200
+        - DJANGO_MODE=DEV
+        - DJANGO_DEBUG=True
+        # - DJANGO_REMOTE_DEBUG=False
+        - DOMAIN_NAMES=localhost
+        - PYTHONUNBUFFERED=0
+        - CELERY_BROKER_URL=amqp://rabbitmq
+        - TZ=PST
+      depends_on:
+        - db
+        - elasticsearch
+        - rabbitmq
+        - arches
+
+    db:
+      # NOTE: due to a race condition, this needs docker-compose run db first to ensure
+      # template directory created
+      image: kartoza/postgis:12.0
+      volumes:
+          - postgres-data:/var/lib/postgresql
+          - postgres-log:/var/log/postgresql
+          - ${ARCHES_PROJECT_ROOT}./docker/init-unix.sql:/docker-entrypoint-initdb.d/init.sql # to set up the DB template
+      ports:
+        - '5432:5432'
+      expose:
+        - '5432'
+      environment:
+        - POSTGRES_USER=postgres
+        - POSTGRES_PASS=postgres
+        - POSTGRES_DB=postgres
+        - POSTGRES_MULTIPLE_EXTENSIONS=postgis,postgis_topology
+        - TZ=PST
+
+    elasticsearch:
+      image: elasticsearch:8.4.0
+      volumes:
+        - elasticsearch-data:/usr/share/elasticsearch/data
+      ports:
+        - "9200:9200"
+        - "9300:9300"
+      environment:
+        - TZ=PST
+        - discovery.type=single-node
+        - discovery.seed_hosts=[]
+        - xpack.security.enabled=false
+        - "ES_JAVA_OPTS=-Xms400m -Xmx400m"
+
+    rabbitmq:
+      image: rabbitmq
+
+volumes:
+    arches-log:
+    arches-static:
+    postgres-log:
+    postgres-data:
+    elasticsearch-data:
+    cantaloupe-data:
