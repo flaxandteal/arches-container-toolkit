@@ -59,6 +59,7 @@ run: docker
 
 .PHONY: clean
 clean: docker
+	@echo -n "This will remove all database and elasticsearch data, are you sure? [y/N] " && read confirmation && [ $${confirmation:-N} = y ]
 	ARCHES_PROJECT_ROOT=$(ARCHES_PROJECT_ROOT) ARCHES_BASE=$(ARCHES_BASE) ARCHES_PROJECT=$(ARCHES_PROJECT) docker-compose -f docker/docker-compose.yml down -v --rmi all
 
 .PHONY: help

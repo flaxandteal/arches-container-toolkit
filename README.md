@@ -2,6 +2,30 @@
 
 This is the toolkit for setting up and managing a new Arches instance.
 
+## Usage
+
+Make sure you have `docker-compose` and either `git`, or `wget` and `tar` available.
+
+Download only the `Makefile` to your project folder, i.e. the same directory as
+`manage.py`, and run:
+
+  make build
+  make run
+
+Note that it will set up a `./docker` submodule or subfolder by default, to pull in
+the rest of the toolkit, so please make sure you do not have any conflicting folder
+in the same location (there is experimental functionality to change the target folder
+name, but mileage may vary).
+
+
+You can clean up all containers _and all data in the containers_ by running:
+
+  make clean
+
+Note that, if you wish to scrub generated files, such as `webpack-stats.json`, you may
+need to use `sudo git clean -xdf` but **note that command will remove ALL uncommitted
+files and folders in your repository**.
+
 ## License
 
 Some of the content here is from the AGPL-3.0 Arches project (specifically, adapted
@@ -15,8 +39,8 @@ version in Arches core (with particular thanks to Open Context and Farallon Geog
 
 Historically, F&T has been working with an adapted form of the Arches 5 & 6 Dockerfile
 to help streamline our Kubernetes project deployment flow, with least modification to the
-Arches base. This means there are different design choices here than you might need if, for example,
-you wish to run a docker-compose production instance -- for example, we:
+Arches base. This means there are different design choices here than you might need if,
+for example, you wish to run a docker-compose production instance -- for example, we:
 
  - build separate static and dynamic containers
  - expect SSL to be separately managed
