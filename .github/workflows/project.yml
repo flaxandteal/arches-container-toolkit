@@ -1,6 +1,9 @@
 name: Build Arches project
 run-name: Build Arches project
 
+on:
+  push:
+
 jobs:
   Check flow:
     runs-on: ubuntu-latest
