@@ -42,6 +42,7 @@ jobs:
           pip install arches
           arches-project create testproject
       - name: Check installation
+        run:
           cd testproject
           cp ../Makefile .
           make docker
