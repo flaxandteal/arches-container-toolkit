@@ -1,11 +1,10 @@
-name: Build Arches project
-run-name: Build Arches project
+name: Set up Arches project
 
 on:
   push:
 
 jobs:
-  Check-flow:
+  test:
     runs-on: ubuntu-latest
     container:
       image: docker:dind
@@ -27,25 +26,26 @@ jobs:
               network=host
       - uses: actions/setup-python@v4
         with:
-          python-version: '3.10' 
+          python-version: '3.10'
+          cache: 'pip'
       - name: Set up Arches project
-        run:
+        run: |
           pip install arches
           arches-project create testproject
       - name: Check installation
-        run:
+        run: |
           cd testproject
           cp ../Makefile .
           make docker
       - name: Add this branch's toolkit
-        run:
+        run: |
           rm -rf docker
           ln -s .. docker
       - name: Check build
-        run:
+        run: |
           make build
       - name: Check run
-        run:
+        run: |
           make run &
           sleep 20
           make down
