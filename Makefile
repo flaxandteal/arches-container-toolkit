@@ -24,30 +24,25 @@ endif
 	@# It looks like the container tools are in place, so carry on.
 else
 	@echo "Did not find the Arches F&T Container Toolkit"
-	$(eval RETRIEVED=0)
-ifneq ("$(shell grep container-toolkit .gitmodules manage.py)","")
+ifneq ("$(shell grep container-toolkit .gitmodules 2>/dev/null)","")
 	@echo "Submodule present so updating it"
 	git submodule update --init
-	$(eval RETRIEVED=1)
 endif
 ifneq ("$(shell which git)", "")
-ifeq ("$(shell git rev-parse --is-inside-work-tree)","true")
+ifeq ("$(shell git rev-parse --is-inside-work-tree 2>/dev/null)","true")
 	@echo Fetching as a git submodule
 	git submodule add --force $(TOOLKIT_REPO) $(TOOLKIT_FOLDER)
-	$(eval RETRIEVED=1)
 endif
 endif
-ifeq ($(RETRIEVED),0)
+ifeq ("$(wildcard $(TOOLKIT_FOLDER))","")
 	@echo No git or not a repo -- fetching as a tarball
 	mkdir $(TOOLKIT_FOLDER)
 	wget -q --content-disposition $(TOOLKIT_REPO)/tarball/$(TOOLKIT_RELEASE) -O $(TOOLKIT_FOLDER)/_toolkit.tgz
-	@echo `export TD=$$(tar -vxzf $(TOOLKIT_FOLDER)/_toolkit.tgz | head -n 1); rm -rf $(TOOLKIT_FOLDER); echo Moving $$TD to $(TOOLKIT_FOLDER); mv $$TD $(TOOLKIT_FOLDER)`
+	@echo `export TD=$$(tar -vtzf $(TOOLKIT_FOLDER)/_toolkit.tgz --exclude='*/*' | awk '{print $$NF}' | head -n 1); tar -xzf $(TOOLKIT_FOLDER)/_toolkit.tgz; rm -rf $(TOOLKIT_FOLDER); echo Moving $$TD to $(TOOLKIT_FOLDER); mv $$TD $(TOOLKIT_FOLDER)`
 endif
 	@echo "Arches F&T Container Toolkit now in [$(TOOLKIT_FOLDER)]"
 endif
-ifneq ("$(shell diff Makefile $(TOOLKIT_FOLDER)/Makefile)", "")
-	$(warning Your Makefile in this directory does not match the one in directory [$(TOOLKIT_FOLDER)], do you need to update it by copy it over this one or vice versa?")
-endif
+	@if [ "$$(diff Makefile $(TOOLKIT_FOLDER)/Makefile)" != "" ]; then echo "Your Makefile in this directory does not match the one in directory [$(TOOLKIT_FOLDER)], do you need to update it by copy it over this one or vice versa?"; echo; fi
 
 .PHONY: build
 build: docker
