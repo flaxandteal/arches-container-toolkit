@@ -15,6 +15,7 @@ Note that it requires `yarn` as a dependency. Run:
 
   arches-project create MYPROJECTNAME
   cd MYPROJECTNAME
+  # If you wish to use git, then run: git commit -a -m "initial commit"
   wget https://raw.githubusercontent.com/flaxandteal/arches-container-toolkit/main/Makefile
   make build
   make run

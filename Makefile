@@ -84,3 +84,7 @@ help:
 	@echo "	    urlpatterns += ["
 	@echo "		re_path(r'^static/(?P<path>.*)\$', views.serve),"
 	@echo "	    ]"
+	@echo "	    ]"
+	@echo
+	@echo "To run general docker-compose commands, use:"
+	@echo "  ARCHES_PROJECT_ROOT=$(ARCHES_PROJECT_ROOT) ARCHES_BASE=$(ARCHES_BASE) ARCHES_PROJECT=$(ARCHES_PROJECT) docker-compose -f docker/docker-compose.yml ..."
