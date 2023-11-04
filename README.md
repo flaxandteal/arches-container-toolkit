@@ -4,6 +4,21 @@ This is the toolkit for setting up and managing a new Arches instance.
 
 ## Usage
 
+### I have no existing Arches project
+
+Install the `arches-project` tool as per the [Arches documentation](https://arches.readthedocs.io/en/stable/)
+then run:
+
+  arches-project create MYPROJECTNAME
+  cd MYPROJECTNAME
+  wget https://raw.githubusercontent.com/flaxandteal/arches-container-toolkit/main/Makefile
+  make build
+  make run
+
+See the notes below for further details.
+
+### I have an existing Arches project
+
 Make sure you have `docker-compose` and either `git`, or `wget` and `tar` available.
 
 Download only the `Makefile` to your project folder, i.e. the same directory as
