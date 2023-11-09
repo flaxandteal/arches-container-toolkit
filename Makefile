@@ -43,7 +43,7 @@ ifeq ("$(wildcard $(TOOLKIT_FOLDER))","")
 endif
 	@echo "Arches F&T Container Toolkit now in [$(TOOLKIT_FOLDER)]"
 endif
-	@if [ "$$(diff Makefile $(TOOLKIT_FOLDER)/Makefile)" != "" ]; then echo "Your Makefile in this directory does not match the one in directory [$(TOOLKIT_FOLDER)], do you need to update it by copy it over this one or vice versa?"; echo; fi
+	@if [ "$$(diff Makefile $(TOOLKIT_FOLDER)/Makefile)" != "" ]; then echo "Your Makefile in this directory does not match the one in directory [$(TOOLKIT_FOLDER)], do you need to update it by copying it over this one or vice versa?"; echo; fi
 
 .PHONY: build
 build: docker
@@ -52,8 +52,9 @@ build: docker
 	$(DOCKER_COMPOSE_COMMAND) stop
 	$(DOCKER_COMPOSE_COMMAND) run --entrypoint /web_root/entrypoint.sh arches_worker install_yarn_components
 	$(DOCKER_COMPOSE_COMMAND) run --entrypoint /web_root/entrypoint.sh arches_worker bootstrap
+	$(TOOLKIT_FOLDER)/act.py . load_package --yes
+	$(DOCKER_COMPOSE_COMMAND) run --entrypoint /web_root/entrypoint.sh arches_worker run_yarn_build_development
 	$(DOCKER_COMPOSE_COMMAND) stop
-	@echo "IF THIS IS YOUR FIRST TIME RUNNING make build AND YOU HAVE NOT ALREADY, MAKE SURE TO UPDATE urls.py (see make help)"
 
 .PHONY: down
 down: docker
@@ -63,9 +64,18 @@ down: docker
 run: docker
 	$(DOCKER_COMPOSE_COMMAND) up
 
+.PHONY: web
+web: docker
+	$(DOCKER_COMPOSE_COMMAND) stop arches
+	$(DOCKER_COMPOSE_COMMAND) run --service-ports arches
+
+.PHONY: yarn-development
+yarn-development: docker
+	$(DOCKER_COMPOSE_COMMAND) run --entrypoint /web_root/entrypoint.sh arches_worker run_yarn_build_development
+
 .PHONY: docker-compose
 docker-compose: docker
-	$(DOCKER_COMPOSE_COMMAND) $(CMD)
+	$(DOCKER_COMPOSE_COMMAND) $(shell echo $(CMD))
 
 .PHONY: clean
 clean: docker
