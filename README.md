@@ -13,6 +13,7 @@ You probably want [the standard tooling](https://arches.readthedocs.io/en/stable
 Install the `arches-project` tool as per the [Arches documentation](https://arches.readthedocs.io/en/stable/).
 Note that it requires `yarn` as a dependency. Run:
 
+```
   arches-project create MYPROJECTNAME
   cd MYPROJECTNAME
   # If you wish to use git, then run: git commit -a -m "initial commit"
@@ -22,6 +23,7 @@ Note that it requires `yarn` as a dependency. Run:
   # see make help for details
   make build
   make run
+```
 
 See the notes below for further details.
 
@@ -32,10 +34,12 @@ Make sure you have `docker-compose` and either `git`, or `wget` and `tar` availa
 Download only the `Makefile` to your project folder, i.e. the same directory as
 `manage.py`, and run:
 
+```
   # Bug: currently a code block needs manually added to urls.py at this point
   # see make help for details
   make build
   make run
+```
 
 The `make build` command will **wipe all data in the (container) Postgres database,
 if one already exists**. Note that it will set up a `./docker` submodule or subfolder by default, to pull in
@@ -46,7 +50,9 @@ name, but mileage may vary).
 
 You can clean up all containers _and all data in the containers_ by running:
 
+```
   make clean
+```
 
 Note that, if you wish to scrub generated files, such as `webpack-stats.json`, you may
 need to use `sudo git clean -xdf` but **note that command will remove ALL uncommitted
