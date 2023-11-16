@@ -62,7 +62,9 @@ The `make build` command will **wipe all data in the (container) Postgres databa
 if one already exists**. Note that it will set up a `./docker` submodule or subfolder by default, to pull in
 the rest of the toolkit, so please make sure you do not have any conflicting folder
 in the same location (there is experimental functionality to change the target folder
-name, but mileage may vary).
+name, but mileage may vary). **Please note** you will need at least 10% of your disk
+space free (even thought it won't be used), so that Elasticsearch will run
+and not panic (otherwise you will get strange errors).
 
 
 You can clean up all containers _and all data in the containers_ by running:
