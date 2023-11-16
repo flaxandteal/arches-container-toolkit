@@ -38,7 +38,7 @@ endif
 endif
 ifeq ("$(wildcard $(TOOLKIT_FOLDER))","")
 	@echo No git or not a repo -- fetching as a tarball
-	mkdir $(TOOLKIT_FOLDER)
+	mkdir -p $(TOOLKIT_FOLDER)
 	wget -q --content-disposition $(TOOLKIT_REPO)/tarball/$(TOOLKIT_RELEASE) -O $(TOOLKIT_FOLDER)/_toolkit.tgz
 	@echo `export TD=$$(tar -vtzf $(TOOLKIT_FOLDER)/_toolkit.tgz --exclude='*/*' | awk '{print $$NF}' | head -n 1); tar -xzf $(TOOLKIT_FOLDER)/_toolkit.tgz; rm -rf $(TOOLKIT_FOLDER); echo Moving $$TD to $(TOOLKIT_FOLDER); mv $$TD $(TOOLKIT_FOLDER)`
 endif
