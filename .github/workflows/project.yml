@@ -25,6 +25,9 @@ jobs:
           ls -ltr
           cd __ci/testproject
           make build
+      - name: Add snippet
+        run: |
+          cat .github/workflows/urls.py-snippet >> __ci/testproject/urls.py
       - name: Check run
         run: |
           ls -ltr
