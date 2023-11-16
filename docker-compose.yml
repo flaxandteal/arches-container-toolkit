@@ -58,6 +58,32 @@ services:
         - db
         - elasticsearch
 
+    arches_base:
+      profiles: ["base"]
+      image: $ARCHES_BASE
+      restart: unless-stopped
+      user: root
+      volumes:
+        - ${ARCHES_PROJECT_ROOT}:/local_root
+      environment:
+        - ARCHES_PROJECT=$ARCHES_PROJECT
+        - INSTALL_DEFAULT_GRAPHS=False
+        - INSTALL_DEFAULT_CONCEPTS=False
+        - PGUSERNAME=postgres
+        - PGPASSWORD=postgres
+        - PGDBNAME=arches
+        - PGHOST=db
+        - PGPORT=5432
+        - ESHOST=elasticsearch
+        - ESPORT=9200
+        - DJANGO_MODE=DEV
+        - DJANGO_DEBUG=True
+        # - DJANGO_REMOTE_DEBUG=False
+        - DOMAIN_NAMES=localhost
+        - PYTHONUNBUFFERED=0
+        - CELERY_BROKER_URL=amqp://rabbitmq
+        - TZ=PST
+
     arches_worker:
       image: arches_${ARCHES_PROJECT}:latest
       restart: unless-stopped

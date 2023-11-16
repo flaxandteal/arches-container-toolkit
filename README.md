@@ -8,7 +8,7 @@ You probably want [the standard tooling](https://arches.readthedocs.io/en/stable
 
 ## Usage
 
-### I have no existing Arches project
+### I have no existing Arches project, but can use `arches-project` command
 
 Install the `arches-project` tool as per the [Arches documentation](https://arches.readthedocs.io/en/stable/).
 Note that it requires `yarn` as a dependency. Run:
@@ -18,6 +18,23 @@ Note that it requires `yarn` as a dependency. Run:
   cd MYPROJECTNAME
   # If you wish to use git, then run: git commit -a -m "initial commit"
   wget https://raw.githubusercontent.com/flaxandteal/arches-container-toolkit/main/Makefile
+  
+  # Bug: currently a code block needs manually added to urls.py at this point
+  # see make help for details
+  make build
+  make run
+```
+
+See the notes below for further details.
+
+### I have no existing Arches project nor have installed Arches locally
+
+The below is experimental. You should make sure not to pick an Arches project name that
+could conflict with a Python module (e.g. `test`).
+
+```
+  wget https://raw.githubusercontent.com/flaxandteal/arches-container-toolkit/main/Makefile
+  make create ARCHES_PROJECT=myprojectname
   
   # Bug: currently a code block needs manually added to urls.py at this point
   # see make help for details
