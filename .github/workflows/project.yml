@@ -15,16 +15,20 @@ jobs:
           python-version: '3.10'
       - name: Set up Arches project
         run: |
-          cp Makefile ..
-          cd ..
+          ls -ltr
+          mkdir __ci
+          cd __ci
+          cp ../Makefile .
           make create ARCHES_PROJECT=testproject
       - name: Check build
         run: |
-          cd ..
+          ls -ltr
+          cd __ci/testproject
           make build
       - name: Check run
         run: |
-          cd ..
+          ls -ltr
+          cd __ci/testproject
           make run &
           sleep 20
           make down
