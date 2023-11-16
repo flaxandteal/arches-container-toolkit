@@ -20,14 +20,18 @@ jobs:
           cd __ci
           cp ../Makefile .
           make create ARCHES_PROJECT=testproject
+          id -u
+          ls -ltr testproject
+      - name: Add snippet
+        run: |
+          id -u
+          ls -ltr __ci/testproject
+          cat .github/workflows/urls.py-snippet >> __ci/testproject/urls.py
       - name: Check build
         run: |
           ls -ltr
           cd __ci/testproject
           make build
-      - name: Add snippet
-        run: |
-          cat .github/workflows/urls.py-snippet >> __ci/testproject/urls.py
       - name: Check run
         run: |
           ls -ltr
