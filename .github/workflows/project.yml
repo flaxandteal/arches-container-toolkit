@@ -20,9 +20,11 @@ jobs:
           make create ARCHES_PROJECT=testproject
       - name: Check build
         run: |
+          cd ..
           make build
       - name: Check run
         run: |
+          cd ..
           make run &
           sleep 20
           make down
