@@ -10,7 +10,7 @@ DOCKER_COMPOSE_COMMAND = ARCHES_PROJECT_ROOT=$(ARCHES_PROJECT_ROOT) ARCHES_BASE=
 CMD ?=
 
 create: docker
-	FORUSER=$(shell id -u) $(DOCKER_COMPOSE_COMMAND) run -e FORUSER=$${FORUSER} --entrypoint /bin/sh arches_base -c ". ../ENV/bin/activate; apt install -y git; pip install 'pyjwt<2.1,>=2.0.0' 'cryptography<3.4.0' --only-binary cryptography --only-binary cffi; cd /local_root; ls -ltr; id -u; arches-project create $(ARCHES_PROJECT) && mv docker Makefile $(ARCHES_PROJECT); ls -ltr; chown -R $${FORUSER}:$${FORUSER} $(ARCHES_PROJECT); ls -ltr $(ARCHES_PROJECT)"
+	FORUSER=$(shell id -u) $(DOCKER_COMPOSE_COMMAND) run -e FORUSER=$${FORUSER} --entrypoint /bin/sh arches_base -c ". ../ENV/bin/activate; apt install -y git; pip install 'pyjwt<2.1,>=2.0.0' 'cryptography<3.4.0' --only-binary cryptography --only-binary cffi; cd /local_root; ls -ltr; id -u; arches-project create $(ARCHES_PROJECT) && mv docker Makefile $(ARCHES_PROJECT); ls -ltr; groupadd -g $${FORUSER} externaluser; useradd externaluser -u $${FORUSER} -g $${FORUSER} -m; chown -R $${FORUSER}:$${FORUSER} $(ARCHES_PROJECT); echo $$?; ls -ltr $(ARCHES_PROJECT)"
 
 .PHONY: docker
 docker:
