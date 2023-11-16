@@ -17,9 +17,8 @@ jobs:
           python-version: '3.10'
       - name: Set up Arches project
         run: |
-          mkdir docker
-          mv * docker
-          cp Makefile .
+          cp Makefile ..
+          cd ..
           make create ARCHES_PROJECT=testproject
       - name: Check build
         run: |
