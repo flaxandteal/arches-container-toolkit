@@ -48,6 +48,7 @@ ifneq ("$(shell which git)", "")
 ifeq ("$(shell git rev-parse --is-inside-work-tree 2>/dev/null)","true")
 	@echo Fetching as a git submodule
 	git submodule add --force $(TOOLKIT_REPO) $(TOOLKIT_FOLDER)
+	exit
 endif
 endif
 ifeq ("$(wildcard $(TOOLKIT_FOLDER))","")
