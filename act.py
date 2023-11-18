@@ -72,7 +72,7 @@ class ArchesProject:
         self.run_manage_command(["packages", "-o", "load_package", "-s", self.package_folder] + (["-y"] if all_yes else []))
 
     def wait_for_db(self):
-        self.run_entrypoint_command("wait_for_db")
+        self.run_entrypoint_command(["wait_for_db"])
 
     def run_entrypoint_command(self, args):
         os.chdir(self.root)

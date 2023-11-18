@@ -65,7 +65,7 @@ build: docker
 	$(DOCKER_COMPOSE_COMMAND) stop
 	$(DOCKER_COMPOSE_COMMAND) run --entrypoint /web_root/entrypoint.sh arches_worker install_yarn_components
 	$(DOCKER_COMPOSE_COMMAND) run --entrypoint /web_root/entrypoint.sh arches_worker bootstrap
-	$(TOOLKIT_FOLDER)/act.py . load_package --yes
+	if [ -z $(ARCHES_PROJECT)/pkg ]; then $(TOOLKIT_FOLDER)/act.py . load_package --yes; fi
 	$(DOCKER_COMPOSE_COMMAND) run --entrypoint /web_root/entrypoint.sh arches_worker run_yarn_build_development
 	$(DOCKER_COMPOSE_COMMAND) stop
 	@echo "IF THIS IS YOUR FIRST TIME RUNNING make build AND YOU HAVE NOT ALREADY, MAKE SURE TO UPDATE urls.py (see make help)"
