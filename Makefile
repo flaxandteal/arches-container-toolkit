@@ -13,6 +13,16 @@ create: docker
 	echo $(shell id -u)
 	FORUSER=$(shell id -u) $(DOCKER_COMPOSE_COMMAND) run -e FORUSER=$(shell id -u) --entrypoint /bin/sh arches_base -c ". ../ENV/bin/activate; apt install -y git; pip install 'pyjwt<2.1,>=2.0.0' 'cryptography<3.4.0' --only-binary cryptography --only-binary cffi; cd /local_root; ls -ltr; id -u; arches-project create $(ARCHES_PROJECT) && mv docker Makefile $(ARCHES_PROJECT); ls -ltr; echo \$${FORUSER}; groupadd -g \$${FORUSER} externaluser; useradd -u \$${FORUSER} -g \$${FORUSER} externaluser; chown -R \$${FORUSER}:\$${FORUSER} $(ARCHES_PROJECT); echo \$$?; ls -ltr $(ARCHES_PROJECT)"
 
+cypress.config.js: dl-docker
+	cp docker/tests/cypress.config.js $(ARCHES_PROJECT_ROOT)
+	cp -R docker/tests/cypress $(ARCHES_PROJECT_ROOT)
+
+.PHONY: cypress
+cypress: cypress.config.js
+
+.PHONY: test
+test: cypress
+
 .PHONY: docker
 docker: dl-docker
 
