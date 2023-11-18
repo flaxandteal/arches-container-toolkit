@@ -44,14 +44,10 @@ ifneq ("$(shell grep container-toolkit .gitmodules 2>/dev/null)","")
 	@echo "Submodule present so updating it"
 	git submodule update --init
 endif
-ifneq ("$(shell which git)", "")
-ifeq ("$(shell git rev-parse --is-inside-work-tree 2>/dev/null)","true")
+ifeq ("$(shell which git && git rev-parse --is-inside-work-tree 2>/dev/null)", "true")
 	@echo Fetching as a git submodule
 	git submodule add --force $(TOOLKIT_REPO) $(TOOLKIT_FOLDER)
-	exit
-endif
-endif
-ifeq ("$(wildcard $(TOOLKIT_FOLDER))","")
+else
 	@echo No git or not a repo -- fetching as a tarball
 	mkdir $(TOOLKIT_FOLDER)
 	wget -q --content-disposition $(TOOLKIT_REPO)/tarball/$(TOOLKIT_RELEASE) -O $(TOOLKIT_FOLDER)/_toolkit.tgz
