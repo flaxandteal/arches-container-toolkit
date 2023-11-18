@@ -3,22 +3,32 @@ default: help
 TOOLKIT_REPO = https://github.com/flaxandteal/arches-container-toolkit
 TOOLKIT_FOLDER = docker
 TOOLKIT_RELEASE = main
-ARCHES_PROJECT ?= $(shell ls -1 */__init__.py | head -n 1 | sed 's/\/.*//g')
+ARCHES_PROJECT = $(shell ls -1 */__init__.py | head -n 1 | sed 's/\/.*//g')
 ARCHES_BASE = flaxandteal/arches_base
 ARCHES_PROJECT_ROOT = $(shell pwd)/
 DOCKER_COMPOSE_COMMAND = ARCHES_PROJECT_ROOT=$(ARCHES_PROJECT_ROOT) ARCHES_BASE=$(ARCHES_BASE) ARCHES_PROJECT=$(ARCHES_PROJECT) docker-compose -p $(ARCHES_PROJECT) -f docker/docker-compose.yml
 CMD ?=
 
-create: docker
-	echo $(shell id -u)
-	FORUSER=$(shell id -u) $(DOCKER_COMPOSE_COMMAND) run -e FORUSER=$(shell id -u) --entrypoint /bin/sh arches_base -c ". ../ENV/bin/activate; apt install -y git; pip install 'pyjwt<2.1,>=2.0.0' 'cryptography<3.4.0' --only-binary cryptography --only-binary cffi; cd /local_root; ls -ltr; id -u; arches-project create $(ARCHES_PROJECT) && mv docker Makefile $(ARCHES_PROJECT); ls -ltr; echo \$${FORUSER}; groupadd -g \$${FORUSER} externaluser; useradd -u \$${FORUSER} -g \$${FORUSER} externaluser; chown -R \$${FORUSER}:\$${FORUSER} $(ARCHES_PROJECT); echo \$$?; ls -ltr $(ARCHES_PROJECT)"
+cypress.config.js: dl-docker
+	cp docker/tests/cypress.config.js $(ARCHES_PROJECT_ROOT)
+	cp -R docker/tests/cypress $(ARCHES_PROJECT_ROOT)
+
+.PHONY: cypress
+cypress: cypress.config.js
+
+.PHONY: test
+test: cypress
 
 .PHONY: docker
-docker:
+docker: dl-docker
+
+dl-docker:
 	@echo ARCHES_PROJECT is [$(ARCHES_PROJECT)]
 	@echo $(wildcard $(TOOLKIT_FOLDER)/CONTAINER_TOOLS)
 ifneq ("$(wildcard init-unix.sql)","")
 	$(error It looks like you are running make in the tools directory itself - run 'make help' for information. Exiting:)
+else ifeq ("$(wildcard manage.py)","")
+	$(error It looks like you are not running make in the top-level project folder (where manage.py lives) - run 'make help' for information. Exiting:)
 else ifneq ("$(wildcard $(TOOLKIT_FOLDER))","")
 ifneq ("$(wildcard $(TOOLKIT_FOLDER)/CONTAINER_TOOLS)","")
 	$(error It looks like your ./$(TOOLKIT_FOLDER) subfolder does not contain the Arches F&T Container Toolkit\
@@ -39,7 +49,7 @@ endif
 endif
 ifeq ("$(wildcard $(TOOLKIT_FOLDER))","")
 	@echo No git or not a repo -- fetching as a tarball
-	mkdir -p $(TOOLKIT_FOLDER)
+	mkdir $(TOOLKIT_FOLDER)
 	wget -q --content-disposition $(TOOLKIT_REPO)/tarball/$(TOOLKIT_RELEASE) -O $(TOOLKIT_FOLDER)/_toolkit.tgz
 	@echo `export TD=$$(tar -vtzf $(TOOLKIT_FOLDER)/_toolkit.tgz --exclude='*/*' | awk '{print $$NF}' | head -n 1); tar -xzf $(TOOLKIT_FOLDER)/_toolkit.tgz; rm -rf $(TOOLKIT_FOLDER); echo Moving $$TD to $(TOOLKIT_FOLDER); mv $$TD $(TOOLKIT_FOLDER)`
 endif
@@ -55,6 +65,7 @@ build: docker
 	$(DOCKER_COMPOSE_COMMAND) run --entrypoint /web_root/entrypoint.sh arches_worker install_yarn_components
 	$(DOCKER_COMPOSE_COMMAND) run --entrypoint /web_root/entrypoint.sh arches_worker bootstrap
 	$(DOCKER_COMPOSE_COMMAND) stop
+	@echo "IF THIS IS YOUR FIRST TIME RUNNING make build AND YOU HAVE NOT ALREADY, MAKE SURE TO UPDATE urls.py (see make help)"
 
 .PHONY: down
 down: docker
@@ -93,13 +104,12 @@ help:
 	@echo "If you do not see a project above or it is wrong, ensure that there is exactly one subfolder of this directory with an"
 	@echo "__init__.py file."
 	@echo
-	@echo "Note that '$(ARCHES_PROJECT)/urls.py' must have (manually added) something similar to:"
+	@echo "Note that '$(ARCHES_PROJECT)/urls.py' must have (manually added):"
 	@echo "	if settings.DEBUG:"
 	@echo "	    from django.contrib.staticfiles import views"
 	@echo "	    from django.urls import re_path"
 	@echo "	    urlpatterns += ["
-	@echo "		re_path(r'^static/(?P<path>.*)\$', views.serve),"
-	@echo "	    ]"
+	@echo "		re_path(r'^static/(?P<path>.*)$$', views.serve),"
 	@echo "	    ]"
 	@echo
 	@echo "To run general docker-compose commands, use:"
