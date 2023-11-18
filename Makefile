@@ -10,17 +10,8 @@ DOCKER_COMPOSE_COMMAND = ARCHES_PROJECT_ROOT=$(ARCHES_PROJECT_ROOT) ARCHES_BASE=
 CMD ?=
 
 create: docker
-	FORUSER=$(shell id -u) $(DOCKER_COMPOSE_COMMAND) run -e FORUSER=$${FORUSER} --entrypoint /bin/sh arches_base -c ". ../ENV/bin/activate; apt install -y git; pip install 'pyjwt<2.1,>=2.0.0' 'cryptography<3.4.0' --only-binary cryptography --only-binary cffi; cd /local_root; ls -ltr; id -u; arches-project create $(ARCHES_PROJECT) && mv docker Makefile $(ARCHES_PROJECT); ls -ltr; chown -R $${FORUSER}:$${FORUSER} $(ARCHES_PROJECT)"
-
-cypress.config.js: dl-docker
-	cp docker/tests/cypress.config.js $(ARCHES_PROJECT_ROOT)
-	cp -R docker/tests/cypress $(ARCHES_PROJECT_ROOT)
-
-.PHONY: cypress
-cypress: cypress.config.js
-
-.PHONY: test
-test: cypress
+	echo $(shell id -u)
+	FORUSER=$(shell id -u) $(DOCKER_COMPOSE_COMMAND) run -e FORUSER=$(shell id -u) --entrypoint /bin/sh arches_base -c ". ../ENV/bin/activate; apt install -y git; pip install 'pyjwt<2.1,>=2.0.0' 'cryptography<3.4.0' --only-binary cryptography --only-binary cffi; cd /local_root; ls -ltr; id -u; arches-project create $(ARCHES_PROJECT) && mv docker Makefile $(ARCHES_PROJECT); ls -ltr; echo \$${FORUSER}; groupadd -g \$${FORUSER} externaluser; useradd -u \$${FORUSER} -g \$${FORUSER} externaluser; chown -R \$${FORUSER}:\$${FORUSER} $(ARCHES_PROJECT); echo \$$?; ls -ltr $(ARCHES_PROJECT)"
 
 .PHONY: docker
 docker: dl-docker
@@ -49,7 +40,7 @@ ifeq ("$(shell (which git > /dev/null) && git rev-parse --is-inside-work-tree 2>
 	git submodule add --force $(TOOLKIT_REPO) $(TOOLKIT_FOLDER)
 else
 	@echo No git or not a repo -- fetching as a tarball
-	mkdir $(TOOLKIT_FOLDER)
+	mkdir -p $(TOOLKIT_FOLDER)
 	wget -q --content-disposition $(TOOLKIT_REPO)/tarball/$(TOOLKIT_RELEASE) -O $(TOOLKIT_FOLDER)/_toolkit.tgz
 	@echo `export TD=$$(tar -vtzf $(TOOLKIT_FOLDER)/_toolkit.tgz --exclude='*/*' | awk '{print $$NF}' | head -n 1); tar -xzf $(TOOLKIT_FOLDER)/_toolkit.tgz; rm -rf $(TOOLKIT_FOLDER); echo Moving $$TD to $(TOOLKIT_FOLDER); mv $$TD $(TOOLKIT_FOLDER)`
 endif
