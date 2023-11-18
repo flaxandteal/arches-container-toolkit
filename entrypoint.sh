@@ -41,6 +41,8 @@ export DJANGO_PORT=${DJANGO_PORT:-8000}
 #COUCHDB_URL="http://$COUCHDB_USER:$COUCHDB_PASS@$COUCHDB_HOST:$COUCHDB_PORT"
 STATIC_ROOT=${STATIC_ROOT:-/static_root}
 
+export ALLOW_BOOTSTRAP=${ALLOW_BOOTSTRAP:-}
+
 
 cd_web_root() {
 	cd ${WEB_ROOT}
@@ -76,9 +78,13 @@ init_arches() {
 		echo "Database ${PGDBNAME} already exists, skipping initialization."
 		echo ""
 	else
-		echo "Database ${PGDBNAME} does not exist yet, exiting until you 'entrypoint.sh bootstrap'..."
-		sleep 1;
-		exit 1;
+		if [[ "${ALLOW_BOOTSTRAP}" == "True" ]]; then
+			setup_arches
+		else
+			echo "Database ${PGDBNAME} does not exist yet, exiting until you 'entrypoint.sh bootstrap'..."
+			sleep 1;
+			exit 1;
+		fi
 	fi
 }
 
