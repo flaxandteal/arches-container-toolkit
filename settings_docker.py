@@ -20,7 +20,10 @@ COMPRESS_OFFLINE = os.getenv("COMPRESS_OFFLINE")
 COMPRESS_OFFLINE = COMPRESS_OFFLINE and COMPRESS_OFFLINE.lower() == "true"
 COMPRESS_ENABLED = os.getenv("COMPRESS_ENABLED")
 COMPRESS_ENABLED = COMPRESS_ENABLED and COMPRESS_ENABLED.lower() == "true"
+
+# Cover both forms, the first being deprecated
 ARCHES_NAMESPACE_FOR_DATA_EXPORT = "http://arches:8000/"
+PUBLIC_SERVER_ADDRESS = "http://arches:8000/"
 
 for host in ELASTICSEARCH_HOSTS:
     host["scheme"] = "http"
