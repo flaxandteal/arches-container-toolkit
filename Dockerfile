@@ -1,15 +1,21 @@
 ARG ARCHES_BASE=flaxandteal/arches_base
 FROM $ARCHES_BASE
+ARG ARCHES_BASE=flaxandteal/arches_base
+ENV ARCHES_BASE $ARCHES_BASE
+RUN echo $ARCHES_BASE
+RUN echo $ARCHES_BASE
+RUN find /web_root/arches -iname '9605_merge_20231031_090*'
 
 RUN useradd arches
 RUN chgrp arches ../entrypoint.sh && chmod g+rx ../entrypoint.sh
 ARG ARCHES_PROJECT
 ENV ARCHES_PROJECT $ARCHES_PROJECT
 COPY docker/entrypoint.sh ${WEB_ROOT}/
+RUN apt-get -y install python3-libxml2
 RUN . ../ENV/bin/activate \
     && pip install --upgrade pip setuptools \
     && pip install starlette-graphene3 \
-    && pip install "lxml<4.5" starlette-context "google-auth<2.23" django-authorization casbin-django-orm-adapter
+    && pip install "lxml" starlette-context "google-auth<2.23" django-authorization casbin-django-orm-adapter
 COPY . ${WEB_ROOT}/${ARCHES_PROJECT}/
 RUN . ../ENV/bin/activate \
     && pip install cachetools websockets \
@@ -26,3 +32,4 @@ ENTRYPOINT ../entrypoint.sh
 CMD run_arches
 USER 1000
 RUN ls ${WEB_ROOT}/${ARCHES_PROJECT}
+RUN find /web_root/arches -iname '9605_merge_20231031_090*'

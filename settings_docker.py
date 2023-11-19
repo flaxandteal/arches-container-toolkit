@@ -1,5 +1,6 @@
 import os
 from arches.settings import ELASTICSEARCH_HOSTS, DATABASES
+from arches.settings_docker import *
 ALLOWED_HOSTS = ['localhost', '*'] # get_env_variable("DOMAIN_NAMES").split()
 
 LOGGING = {
@@ -12,7 +13,6 @@ LOGGING = {
     "loggers": {"arches": {"handlers": ["console"], "level": "WARNING", "propagate": True}},
 }
 
-CELERY_BROKER_URL = os.getenv("CELERY_BROKER_URL")
 MOBILE_OAUTH_CLIENT_ID = os.getenv("MOBILE_OAUTH_CLIENT_ID")
 STATIC_URL = os.getenv("STATIC_URL") or "/static/"
 STATIC_ROOT = os.getenv("STATIC_ROOT") or "/static_root"
