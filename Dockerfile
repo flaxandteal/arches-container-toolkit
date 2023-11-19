@@ -1,10 +1,5 @@
 ARG ARCHES_BASE=flaxandteal/arches_base
 FROM $ARCHES_BASE
-ARG ARCHES_BASE=flaxandteal/arches_base
-ENV ARCHES_BASE $ARCHES_BASE
-RUN echo $ARCHES_BASE
-RUN echo $ARCHES_BASE
-RUN find /web_root/arches -iname '9605_merge_20231031_090*'
 
 RUN useradd arches
 RUN chgrp arches ../entrypoint.sh && chmod g+rx ../entrypoint.sh
@@ -31,5 +26,3 @@ RUN ../entrypoint.sh install_yarn_components
 ENTRYPOINT ../entrypoint.sh
 CMD run_arches
 USER 1000
-RUN ls ${WEB_ROOT}/${ARCHES_PROJECT}
-RUN find /web_root/arches -iname '9605_merge_20231031_090*'
