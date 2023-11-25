@@ -67,11 +67,11 @@ RUN (cd $WEB_ROOT/$ARCHES_PROJECT/$ARCHES_PROJECT && NODE_OPTIONS=--max_old_spac
 RUN /bin/bash -c ". ../ENV/bin/activate;\
 ../entrypoint.sh setup_arches;\
 python manage.py createcachetable;\
-python manage.py packages -o load_ontologies -s scarlet/pkg/ontologies;\
-python manage.py packages -o load_package -s scarlet/pkg/ -y;\
+python manage.py packages -o load_ontologies -s ${ARCHES_PROJECT}/pkg/ontologies;\
+python manage.py packages -o load_package -s ${ARCHES_PROJECT}/pkg/ -y;\
 python manage.py es index_database\
 ";
-COPY ./scarlet/scarlet/settings.py ${WEB_ROOT}/scarlet/scarlet/settings.py
+COPY ./${ARCHES_PROJECT}/${ARCHES_PROJECT}/settings.py ${WEB_ROOT}/${ARCHES_PROJECT}/${ARCHES_PROJECT}/settings.py
 RUN echo $WEB_ROOT "|" $ARCHES_PROJECT && ${WEB_ROOT}/entrypoint.sh run_arches
 RUN echo $WEB_ROOT "|" $ARCHES_PROJECT && ${WEB_ROOT}/entrypoint.sh run_yarn_build_${ARCHES_ENVIRONMENT}
 
