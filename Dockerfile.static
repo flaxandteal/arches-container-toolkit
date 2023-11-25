@@ -71,7 +71,7 @@ python manage.py packages -o load_ontologies -s ${ARCHES_PROJECT}/pkg/ontologies
 python manage.py packages -o load_package -s ${ARCHES_PROJECT}/pkg/ -y;\
 python manage.py es index_database\
 ";
-COPY ./${ARCHES_PROJECT}/${ARCHES_PROJECT}/settings.py ${WEB_ROOT}/${ARCHES_PROJECT}/${ARCHES_PROJECT}/settings.py
+COPY ./${ARCHES_PROJECT}/settings.py ${WEB_ROOT}/${ARCHES_PROJECT}/${ARCHES_PROJECT}/settings.py
 RUN echo $WEB_ROOT "|" $ARCHES_PROJECT && ${WEB_ROOT}/entrypoint.sh run_arches
 RUN echo $WEB_ROOT "|" $ARCHES_PROJECT && ${WEB_ROOT}/entrypoint.sh run_yarn_build_${ARCHES_ENVIRONMENT}
 
