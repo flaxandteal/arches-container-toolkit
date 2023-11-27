@@ -22,8 +22,8 @@ COMPRESS_ENABLED = os.getenv("COMPRESS_ENABLED")
 COMPRESS_ENABLED = COMPRESS_ENABLED and COMPRESS_ENABLED.lower() == "true"
 
 # Cover both forms, the first being deprecated
-ARCHES_NAMESPACE_FOR_DATA_EXPORT = "http://arches:8000/"
-PUBLIC_SERVER_ADDRESS = "http://arches:8000/"
+ARCHES_NAMESPACE_FOR_DATA_EXPORT = os.getenv("ARCHES_NAMESPACE_FOR_DATA_EXPORT", "http://arches:8000/")
+PUBLIC_SERVER_ADDRESS = os.getenv("PUBLIC_SERVER_ADDRESS", ARCHES_NAMESPACE_FOR_DATA_EXPORT)
 
 CSRF_TRUSTED_ORIGINS = [f"https://{domain}" for domain in os.getenv("DOMAIN_NAMES", "").split()]
 
