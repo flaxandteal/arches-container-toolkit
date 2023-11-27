@@ -63,13 +63,13 @@ class ArchesProject:
         if do_import == "y":
             self.load_package()
 
-    def load_package(self, all_yes=False):
+    def load_package(self, all_yes=False, load_business_data=True):
         if not self.package_folder.exists():
             raise RuntimeError(f"A package has not been imported, please provide one with import_package first!")
         print("Installing to DB with Makefile")
         if self.ontologies_folder.exists():
             self.run_manage_command(["load_ontology", "-s", self.ontologies_folder])
-        self.run_manage_command(["packages", "-o", "load_package", "-s", self.package_folder] + (["-y"] if all_yes else []))
+        self.run_manage_command(["packages", "-o", "load_package", "-s", self.package_folder] + (["-y"] if all_yes else []) + (["--no-business_data"] if not load_business_data else []))
 
     def wait_for_db(self):
         self.run_entrypoint_command(["wait_for_db"])
@@ -111,7 +111,7 @@ def run(args):
     parser_lp.add_argument('--yes', action='store_true')
     def load_package(project, args):
         project.wait_for_db()
-        project.load_package(all_yes=args.yes)
+        project.load_package(all_yes=args.yes, load_business_data=not (os.getenv("NO_LOAD_BUSINESS_DATA", "") == "1"))
     parser_lp.set_defaults(func=load_package)
 
     args = parser.parse_args(args)
