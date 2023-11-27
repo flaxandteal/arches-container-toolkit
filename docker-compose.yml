@@ -22,7 +22,7 @@ services:
       volumes:
         - arches-log:/arches/arches/logs
         - arches-static:/static_root
-        - $ARCHES_ROOT:/web_root/arches
+        # $ARCHES_ROOT:/web_root/arches
         # $ARCHES_ROOT/docker/gunicorn_config.py:/web_root/arches/gunicorn_config.py
         # ./$ARCHES_PROJECT/media/node_modules/arches/docker/gunicorn_config.py:/web_root/arches/arches/gunicorn_config.py
         - ${ARCHES_PROJECT_ROOT}.:/web_root/$ARCHES_PROJECT
@@ -103,7 +103,7 @@ services:
       volumes:
         - arches-log:/arches/arches/logs
         - arches-static:/static_root
-        - $ARCHES_ROOT:/web_root/arches
+        # $ARCHES_ROOT:/web_root/arches
         # $ARCHES_ROOT/docker/gunicorn_config.py:/web_root/arches/gunicorn_config.py
         # ./$ARCHES_PROJECT/media/node_modules/arches/docker/gunicorn_config.py:/web_root/arches/arches/gunicorn_config.py
         - ${ARCHES_PROJECT_ROOT}.:/web_root/$ARCHES_PROJECT
