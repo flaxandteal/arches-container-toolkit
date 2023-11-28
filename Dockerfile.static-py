@@ -7,6 +7,7 @@ ARG ARCHES_STATIC_IMAGE=flaxandteal_${ARCHES_PROJECT}_static:$VERSION
 FROM $ARCHES_STATIC_IMAGE as arches_static
 
 FROM $ARCHES_DYNAMIC_IMAGE as arches
+ARG STATIC_ROOT=/static_root
 
 COPY --from=arches_static /usr/share/nginx/webpack-stats.json ${WEB_ROOT}/${ARCHES_PROJECT}/${ARCHES_PROJECT}/webpack/webpack-stats.json
 RUN mkdir -p ${STATIC_ROOT}/CACHE
