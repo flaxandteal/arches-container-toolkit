@@ -26,6 +26,11 @@ ARCHES_NAMESPACE_FOR_DATA_EXPORT = os.getenv("ARCHES_NAMESPACE_FOR_DATA_EXPORT",
 PUBLIC_SERVER_ADDRESS = os.getenv("PUBLIC_SERVER_ADDRESS", ARCHES_NAMESPACE_FOR_DATA_EXPORT)
 
 CSRF_TRUSTED_ORIGINS = [f"https://{domain}" for domain in os.getenv("DOMAIN_NAMES", "").split()]
+CELERY_BROKER_URL = os.getenv("CELERY_BROKER_URL", "amqp://{}:{}@{}".format(
+    os.getenv("RABBITMQ_USER"),
+    os.getenv("RABBITMQ_PASS"),
+    os.getenv("RABBITMQ_HOST", "rabbitmq")
+))  # RabbitMQ --> "amqp://guest:guest@localhost",  Redis --> "redis://localhost:6379/0"
 
 for host in ELASTICSEARCH_HOSTS:
     host["scheme"] = "http"
