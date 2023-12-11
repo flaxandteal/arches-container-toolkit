@@ -494,6 +494,7 @@ activate_virtualenv
 
 # If no arguments are supplied, assume the server needs to be run
 if [[ $#  -eq 0 ]]; then
+	wait_for_db
 	run_arches
 fi
 
