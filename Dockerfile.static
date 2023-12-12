@@ -73,8 +73,9 @@ RUN (cd $WEB_ROOT/$ARCHES_PROJECT/$ARCHES_PROJECT && NODE_OPTIONS=--max_old_spac
 
 RUN (cd $WEB_ROOT/$ARCHES_PROJECT/$ARCHES_PROJECT && NODE_OPTIONS=--max_old_space_size=8192 NODE_PATH=./media/node_modules yarn install -D)
 RUN /bin/bash -c ". ../ENV/bin/activate;\
+pip install django-authorization casbin-django-orm-adapter cachetools websockets;\
+(if [ -f ${WEB_ROOT}/${ARCHES_PROJECT}/requirements.txt ]; then pip install -r ${WEB_ROOT}/${ARCHES_PROJECT}/requirements.txt --no-binary :all:; fi); \
 ../entrypoint.sh setup_arches;\
-pip install django-authorization casbin-django-orm-adapter;\
 python manage.py createcachetable;\
 python manage.py load_ontology -s ${ARCHES_PROJECT}/pkg/ontologies;\
 python manage.py packages -o load_package -s ${ARCHES_PROJECT}/pkg/ -y --no-business_data;\
