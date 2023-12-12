@@ -75,7 +75,6 @@ RUN (cd $WEB_ROOT/$ARCHES_PROJECT/$ARCHES_PROJECT && NODE_OPTIONS=--max_old_spac
 RUN apt-get -y install python3-libxml2 git
 RUN /bin/bash -c ". ../ENV/bin/activate;\
 pip install django-authorization casbin-django-orm-adapter cachetools websockets git+https://github.com/flaxandteal/arches-orm@master;\
-../entrypoint.sh setup_arches;\
 python manage.py createcachetable;\
 python manage.py load_ontology -s ${ARCHES_PROJECT}/pkg/ontologies;\
 python manage.py packages -o load_package -s ${ARCHES_PROJECT}/pkg/ -y --no-business_data;\
