@@ -53,14 +53,15 @@ RUN useradd arches && mkdir -p /static_root && chown -R arches /static_root
 WORKDIR ${WEB_ROOT}/${ARCHES_PROJECT}
 
 FROM $ARCHES_DYNAMIC_IMAGE as arches_dynamic
-FROM arches_static_cache as arches
+#FROM arches_static_cache as arches
 ARG WEB_ROOT=/web_root
 ARG STATIC_ROOT=/static_root
 ARG ARCHES_PROJECT
-COPY --from=arches_dynamic ${WEB_ROOT}/entrypoint.sh ${WEB_ROOT}/entrypoint.sh
-COPY --from=arches_dynamic ${WEB_ROOT}/${ARCHES_PROJECT}/ /web_root/${ARCHES_PROJECT}/
-# settings_docker.py
-COPY --from=arches_dynamic ${WEB_ROOT}/${ARCHES_PROJECT}/${ARCHES_PROJECT}/settings_local.py ${WEB_ROOT}/${ARCHES_PROJECT}/${ARCHES_PROJECT}/settings_local.py
+USER 0
+#COPY --from=arches_dynamic ${WEB_ROOT}/entrypoint.sh ${WEB_ROOT}/entrypoint.sh
+#COPY --from=arches_dynamic ${WEB_ROOT}/${ARCHES_PROJECT}/ /web_root/${ARCHES_PROJECT}/
+## settings_docker.py
+#COPY --from=arches_dynamic ${WEB_ROOT}/${ARCHES_PROJECT}/${ARCHES_PROJECT}/settings_local.py ${WEB_ROOT}/${ARCHES_PROJECT}/${ARCHES_PROJECT}/settings_local.py
 
 RUN ${WEB_ROOT}/entrypoint.sh init_yarn_components
 
@@ -89,11 +90,11 @@ FROM nginxinc/nginx-unprivileged:1.21.5-alpine
 ARG WEB_ROOT=/web_root
 ARG STATIC_ROOT=/static_root
 ARG ARCHES_PROJECT
-COPY --from=arches ${WEB_ROOT}/${ARCHES_PROJECT}/${ARCHES_PROJECT}/media/* /usr/share/nginx/html/
-COPY --from=arches ${WEB_ROOT}/${ARCHES_PROJECT}/${ARCHES_PROJECT}/media/build/js/* /usr/share/nginx/html/js/
-COPY --from=arches ${WEB_ROOT}/${ARCHES_PROJECT}/${ARCHES_PROJECT}/webpack/webpack-stats.json /usr/share/nginx/webpack-stats.json
-COPY --from=arches ${WEB_ROOT}/${ARCHES_PROJECT}/${ARCHES_PROJECT}/media/node_modules/js-cookie/src/js.cookie.js /usr/share/nginx/html/js/js-cookie.js
-COPY --from=arches ${STATIC_ROOT} /usr/share/nginx/html/static
+COPY --from=arches_dynamic ${WEB_ROOT}/${ARCHES_PROJECT}/${ARCHES_PROJECT}/media/* /usr/share/nginx/html/
+COPY --from=arches_dynamic ${WEB_ROOT}/${ARCHES_PROJECT}/${ARCHES_PROJECT}/media/build/js/* /usr/share/nginx/html/js/
+COPY --from=arches_dynamic ${WEB_ROOT}/${ARCHES_PROJECT}/${ARCHES_PROJECT}/webpack/webpack-stats.json /usr/share/nginx/webpack-stats.json
+COPY --from=arches_dynamic ${WEB_ROOT}/${ARCHES_PROJECT}/${ARCHES_PROJECT}/media/node_modules/js-cookie/src/js.cookie.js /usr/share/nginx/html/js/js-cookie.js
+COPY --from=arches_dynamic ${STATIC_ROOT} /usr/share/nginx/html/static
 #RUN mv /usr/share/nginx/html/static/* /usr/share/nginx/html
 
 # Must be numeric to verify not root
