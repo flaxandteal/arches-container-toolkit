@@ -11,7 +11,7 @@ RUN . ../ENV/bin/activate \
     && pip install --upgrade pip setuptools \
     && pip install starlette-graphene3 \
     && pip install "lxml" starlette-context "google-auth<2.23" django-authorization casbin-django-orm-adapter \
-    && pip install django-debug-toolbar # only needed in debug
+    && pip install django-debug-toolbar django-debug-toolbar-force # only needed in debug
 COPY . ${WEB_ROOT}/${ARCHES_PROJECT}/
 RUN . ../ENV/bin/activate \
     && pip install cachetools websockets \
