@@ -28,6 +28,7 @@ services:
         - ${ARCHES_PROJECT_ROOT}./docker/settings_docker.py:/web_root/$ARCHES_PROJECT/$ARCHES_PROJECT/settings_local.py
       environment:
         - ARCHES_PROJECT=$ARCHES_PROJECT
+        - INSTALL_CORAL_PACKAGE=True
         - INSTALL_DEFAULT_GRAPHS=False
         - INSTALL_DEFAULT_CONCEPTS=False
         - PGUSERNAME=postgres
@@ -53,6 +54,10 @@ services:
         - CANTALOUPE_PORT=8182
         - COMPRESS_ENABLED=False
         - WEB_ROOT=/web_root
+        - COUCHDB_HOST=couchdb
+        - COUCHDB_PORT=5984
+        - COUCHDB_USER=admin
+        - COUCHDB_PASS=password
 
       ports:
         - '8000:8000'
@@ -85,6 +90,10 @@ services:
         - DOMAIN_NAMES=localhost
         - PYTHONUNBUFFERED=0
         - TZ=PST
+        - COUCHDB_HOST=couchdb
+        - COUCHDB_PORT=5984
+        - COUCHDB_USER=admin
+        - COUCHDB_PASS=password
 
     arches_worker:
       image: arches_${ARCHES_PROJECT}:latest
@@ -129,6 +138,10 @@ services:
         - CANTALOUPE_HOST=cantaloupe
         - CANTALOUPE_PORT=8182
         - TZ=PST
+        - COUCHDB_HOST=couchdb
+        - COUCHDB_PORT=5984
+        - COUCHDB_USER=admin
+        - COUCHDB_PASS=password
       depends_on:
         - db
         - elasticsearch
