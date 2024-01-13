@@ -12,7 +12,7 @@ services:
       entrypoint: ["../entrypoint.sh"]
       build:
         context: ${ARCHES_PROJECT_ROOT}.
-        dockerfile: ${ARCHES_PROJECT_ROOT}./docker/Dockerfile.debug
+        dockerfile: ${ARCHES_PROJECT_ROOT}./docker/Dockerfile
         args:
           - ARCHES_PROJECT=$ARCHES_PROJECT
           - ARCHES_BASE=$ARCHES_BASE
@@ -20,10 +20,9 @@ services:
       volumes:
         - arches-log:/arches/arches/logs
         - arches-static:/static_root
-        - $ARCHES_ROOT:/web_root/arches
+        # $ARCHES_ROOT:/web_root/arches
         # $ARCHES_ROOT/docker/gunicorn_config.py:/web_root/arches/gunicorn_config.py
         # ./$ARCHES_PROJECT/media/node_modules/arches/docker/gunicorn_config.py:/web_root/arches/arches/gunicorn_config.py
-        - ../../arches-orm/arches_orm:/web_root/ENV/lib/python3.10/site-packages/arches_orm
         - ${ARCHES_PROJECT_ROOT}.:/web_root/$ARCHES_PROJECT
         - ${ARCHES_PROJECT_ROOT}./docker/entrypoint.sh:/web_root/entrypoint.sh
         - ${ARCHES_PROJECT_ROOT}./docker/settings_docker.py:/web_root/$ARCHES_PROJECT/$ARCHES_PROJECT/settings_local.py
@@ -33,7 +32,7 @@ services:
         - INSTALL_DEFAULT_CONCEPTS=False
         - PGUSERNAME=postgres
         - PGPASSWORD=postgres
-        - PGDBNAME=arches2
+        - PGDBNAME=arches
         - PGHOST=db
         - PGPORT=5432
         - ESHOST=elasticsearch
@@ -75,7 +74,7 @@ services:
         - INSTALL_DEFAULT_CONCEPTS=False
         - PGUSERNAME=postgres
         - PGPASSWORD=postgres
-        - PGDBNAME=arches2
+        - PGDBNAME=arches
         - PGHOST=db
         - PGPORT=5432
         - ESHOST=elasticsearch
@@ -102,10 +101,9 @@ services:
       volumes:
         - arches-log:/arches/arches/logs
         - arches-static:/static_root
-        - $ARCHES_ROOT:/web_root/arches
+        # $ARCHES_ROOT:/web_root/arches
         # $ARCHES_ROOT/docker/gunicorn_config.py:/web_root/arches/gunicorn_config.py
         # ./$ARCHES_PROJECT/media/node_modules/arches/docker/gunicorn_config.py:/web_root/arches/arches/gunicorn_config.py
-        - ../../arches-orm/arches_orm:/web_root/ENV/lib/python3.10/site-packages/arches_orm
         - ${ARCHES_PROJECT_ROOT}.:/web_root/$ARCHES_PROJECT
         - ${ARCHES_PROJECT_ROOT}./docker/entrypoint.sh:/web_root/entrypoint.sh
         - ${ARCHES_PROJECT_ROOT}./docker/settings_docker.py:/web_root/$ARCHES_PROJECT/$ARCHES_PROJECT/settings_local.py
@@ -115,7 +113,7 @@ services:
         - INSTALL_DEFAULT_CONCEPTS=False
         - PGUSERNAME=postgres
         - PGPASSWORD=postgres
-        - PGDBNAME=arches2
+        - PGDBNAME=arches
         - PGHOST=db
         - PGPORT=5432
         - ESHOST=elasticsearch
@@ -142,7 +140,6 @@ services:
       # NOTE: due to a race condition, this needs docker-compose run db first to ensure
       # template directory created
       image: kartoza/postgis:12.0
-      #mage: kartoza/postgis:14-3.1
       volumes:
           - postgres-data:/var/lib/postgresql
           - postgres-log:/var/log/postgresql
