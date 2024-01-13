@@ -31,6 +31,10 @@ CELERY_BROKER_URL = os.getenv("CELERY_BROKER_URL", "amqp://{}:{}@{}".format(
     os.getenv("RABBITMQ_PASS"),
     os.getenv("RABBITMQ_HOST", "rabbitmq")
 ))  # RabbitMQ --> "amqp://guest:guest@localhost",  Redis --> "redis://localhost:6379/0"
+RABBITMQ_USER = os.getenv("RABBITMQ_USER")
+RABBITMQ_PASS = os.getenv("RABBITMQ_PASS")
+RABBITMQ_HOST = os.getenv("RABBITMQ_HOST", "rabbitmq")
+CASBIN_RELOAD_QUEUE = os.getenv("CASBIN_RELOAD_QUEUE", "reloadQueue")
 
 for host in ELASTICSEARCH_HOSTS:
     host["scheme"] = "http"

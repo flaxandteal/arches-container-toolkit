@@ -14,7 +14,7 @@ RUN . ../ENV/bin/activate \
     && pip install django-debug-toolbar django-debug-toolbar-force # only needed in debug
 COPY . ${WEB_ROOT}/${ARCHES_PROJECT}/
 RUN . ../ENV/bin/activate \
-    && pip install cachetools websockets \
+    && pip install cachetools websockets pika \
     && (if [ -f ${WEB_ROOT}/${ARCHES_PROJECT}/requirements.txt ]; then pip install -r ${WEB_ROOT}/${ARCHES_PROJECT}/requirements.txt --no-binary :all:; fi)
 
 COPY docker/settings_docker.py ${WEB_ROOT}/${ARCHES_PROJECT}/${ARCHES_PROJECT}/settings_local.py
