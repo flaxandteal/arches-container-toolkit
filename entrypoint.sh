@@ -225,8 +225,7 @@ install_yarn_components() {
 	echo "----- INSTALLING YARN COMPONENTS -----"
 	echo ""
 	cd_yarn_folder
-	yarn add -D babel-loader html-loader clean-webpack-plugin webpack-cli mini-css-extract-plugin stylelint-webpack-plugin eslint-webpack-plugin css-loader postcss-loader sass-loader raw-loader ttf-loader file-loader url-loader cytoscape-elk ckeditor4 web-worker jquery-validation
-	yarn install
+	yarn install -D
 }
 
 #### Main commands
@@ -379,6 +378,8 @@ run_migrations() {
 	echo ""
 	cd_app_folder
 	python manage.py migrate
+	echo $?
+	echo "[output code]"
 }
 
 collect_static(){
