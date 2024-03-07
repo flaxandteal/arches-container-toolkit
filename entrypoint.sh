@@ -426,6 +426,20 @@ run_celery_worker() {
 	exec python manage.py celery start
 }
 
+run_api_server() {
+	echo ""
+	echo ""
+	echo "----- *** RUNNING API SERVER *** -----"
+	echo ""
+	cd_app_folder
+
+	if [[ ! -z ${ARCHES_PROJECT} ]]; then
+        gunicorn ${ARCHES_PROJECT}.asgi:create_app \
+            --config ${ARCHES_ROOT}/docker/gunicorn_config.py \
+	    -k uvicorn.workers.UvicornWorker
+	fi
+}
+
 
 run_gunicorn_server() {
 	echo ""
@@ -514,6 +528,10 @@ do
 		run_arches)
 			wait_for_db
 			run_arches
+		;;
+		run_api)
+			wait_for_db
+			run_api_server
 		;;
 		run_celery)
 			wait_for_db
