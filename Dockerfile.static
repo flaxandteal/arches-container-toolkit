@@ -69,12 +69,11 @@ RUN (echo "\nSTATIC_ROOT='${STATIC_ROOT}'" >> ${WEB_ROOT}/${ARCHES_PROJECT}/${AR
 RUN (echo "\nARCHES_NAMESPACE_FOR_DATA_EXPORT='${ARCHES_NAMESPACE_FOR_DATA_EXPORT}'" >> ${WEB_ROOT}/${ARCHES_PROJECT}/${ARCHES_PROJECT}/settings_local.py) && echo $STATIC_ROOT
 RUN (echo "\nPUBLIC_SERVER_ADDRESS='${PUBLIC_SERVER_ADDRESS}' or ARCHES_NAMESPACE_FOR_DATA_EXPORT" >> ${WEB_ROOT}/${ARCHES_PROJECT}/${ARCHES_PROJECT}/settings_local.py) && echo $STATIC_ROOT
 
-RUN (cd $WEB_ROOT/$ARCHES_PROJECT/$ARCHES_PROJECT && NODE_OPTIONS=--max_old_space_size=8192 NODE_PATH=./media/node_modules yarn add -D datatables.net-rowgroup-dt vue-loader @vue/compiler-sfc babel-loader html-loader clean-webpack-plugin webpack-cli mini-css-extract-plugin stylelint-webpack-plugin eslint-webpack-plugin css-loader postcss-loader sass-loader raw-loader ttf-loader file-loader url-loader cytoscape-elk ckeditor4 web-worker)
-
+RUN (cd $WEB_ROOT/arches/arches && NODE_OPTIONS=--max_old_space_size=8192 NODE_PATH=$WEB_ROOT/$ARCHES_PROJECT/$ARCHES_PROJECT/media/node_modules yarn install)
 RUN (cd $WEB_ROOT/$ARCHES_PROJECT/$ARCHES_PROJECT && NODE_OPTIONS=--max_old_space_size=8192 NODE_PATH=./media/node_modules yarn install -D)
-RUN apt-get -y install python3-libxml2 git
+RUN apt-get update && apt-get -y install python3-libxml2 git
 RUN /bin/bash -c ". ../ENV/bin/activate;\
-pip install django-debug-toolbar django-debug-toolbar-force django-authorization casbin-django-orm-adapter cachetools websockets git+https://github.com/flaxandteal/arches-orm@master;\
+pip install pika django-debug-toolbar django-debug-toolbar-force django-authorization casbin-django-orm-adapter cachetools websockets git+https://github.com/flaxandteal/arches-orm@master;\
 python manage.py createcachetable;\
 python manage.py load_ontology -s ${ARCHES_PROJECT}/pkg/ontologies;\
 python manage.py packages -o load_package -s ${ARCHES_PROJECT}/pkg/ -y --no-business_data;\
