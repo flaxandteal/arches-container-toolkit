@@ -4,14 +4,14 @@ TOOLKIT_REPO = https://github.com/flaxandteal/arches-container-toolkit
 TOOLKIT_FOLDER = docker
 TOOLKIT_RELEASE = main
 ARCHES_PROJECT ?= $(shell ls -1 */__init__.py | head -n 1 | sed 's/\/.*//g')
-ARCHES_BASE = ghcr.io/flaxandteal/arches-base-7.5-dev:feature-django-casbin
+ARCHES_BASE = ghcr.io/flaxandteal/arches-base-7.5-dev:coral
 ARCHES_PROJECT_ROOT = $(shell pwd)/
 DOCKER_COMPOSE_COMMAND = ARCHES_PROJECT_ROOT=$(ARCHES_PROJECT_ROOT) ARCHES_BASE=$(ARCHES_BASE) ARCHES_PROJECT=$(ARCHES_PROJECT) docker-compose -p $(ARCHES_PROJECT) -f docker/docker-compose.yml
 CMD ?=
 
 create: docker
 	echo $(shell id -u)
-	FORUSER=$(shell id -u) $(DOCKER_COMPOSE_COMMAND) run -e FORUSER=$(shell id -u) --entrypoint /bin/sh arches_base -c ". ../ENV/bin/activate && apt update && apt install -y git && pip install 'pyjwt<2.1,>=2.0.0' 'cryptography<3.4.0' --only-binary cryptography --only-binary cffi && cd /local_root && arches-project create $(ARCHES_PROJECT) && mv docker Makefile $(ARCHES_PROJECT) && echo \$${FORUSER} && groupadd -g \$${FORUSER} externaluser && useradd -u \$${FORUSER} -g \$${FORUSER} externaluser && chown -R \$${FORUSER}:\$${FORUSER} $(ARCHES_PROJECT)"
+	FORUSER=$(shell id -u) $(DOCKER_COMPOSE_COMMAND) run -e FORUSER=$(shell id -u) --entrypoint /bin/sh arches_base -c ". ../ENV/bin/activate; apt install -y git; pip install 'pyjwt<2.1,>=2.0.0' 'cryptography<3.4.0' --only-binary cryptography --only-binary cffi; cd /local_root; ls -ltr; id -u; arches-project create $(ARCHES_PROJECT) && mv docker Makefile $(ARCHES_PROJECT); ls -ltr; echo \$${FORUSER}; groupadd -g \$${FORUSER} externaluser; useradd -u \$${FORUSER} -g \$${FORUSER} externaluser; chown -R \$${FORUSER}:\$${FORUSER} $(ARCHES_PROJECT); echo \$$?; ls -ltr $(ARCHES_PROJECT)"
 
 cypress.config.js: dl-docker
 	cp docker/tests/cypress.config.js $(ARCHES_PROJECT_ROOT)
@@ -70,7 +70,7 @@ build: docker
 	$(DOCKER_COMPOSE_COMMAND) run --entrypoint /web_root/entrypoint.sh arches_worker install_yarn_components
 	$(DOCKER_COMPOSE_COMMAND) run --entrypoint /web_root/entrypoint.sh arches_worker bootstrap
 
-	if [ -d $(ARCHES_PROJECT)/pkg ]; then NO_LOAD_BUSINESS_DATA="$(NO_LOAD_BUSINESS_DATA)" $(TOOLKIT_FOLDER)/act.py . load_package --yes; fi
+	if [ -d $(ARCHES_PROJECT)/pkg ]; then $(TOOLKIT_FOLDER)/act.py . load_package --yes; fi
 	$(DOCKER_COMPOSE_COMMAND) run --entrypoint /web_root/entrypoint.sh arches_worker run_yarn_build_development
 	$(DOCKER_COMPOSE_COMMAND) stop
 	@echo "IF THIS IS YOUR FIRST TIME RUNNING make build AND YOU HAVE NOT ALREADY, MAKE SURE TO UPDATE urls.py (see make help)"
@@ -107,6 +107,10 @@ docker-compose: docker
 .PHONY: manage
 manage: docker
 	$(DOCKER_COMPOSE_COMMAND) run --entrypoint /bin/bash arches_worker -c '. ../ENV/bin/activate; python manage.py $(CMD)'
+
+.PHONY: webpack
+webpack: docker
+	$(DOCKER_COMPOSE_COMMAND) run --entrypoint /bin/bash arches_worker -c '. ../ENV/bin/activate; cd $(ARCHES_PROJECT); DJANGO_MODE=DEV NODE_PATH=./media/node_modules NODE_OPTIONS=--max_old_space_size=8192 node --inspect ./media/node_modules/.bin/webpack --config webpack/webpack.config.dev.js'
 
 .PHONY: clean
 clean: docker
