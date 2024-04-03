@@ -434,7 +434,7 @@ run_api_server() {
 	cd_app_folder
 
 	if [[ ! -z ${ARCHES_PROJECT} ]]; then
-        gunicorn ${ARCHES_PROJECT}.asgi:create_app \
+        DJANGO_SETTINGS_MODULE=${ARCHES_PROJECT}.settings gunicorn arches_orm.graphql.django_asgi:app \
             --config ${ARCHES_ROOT}/docker/gunicorn_config.py \
 	    -k uvicorn.workers.UvicornWorker
 	fi
