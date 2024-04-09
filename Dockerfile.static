@@ -4,8 +4,8 @@ ARG ARCHES_BASE=flaxandteal/arches_base
 ARG ARCHES_DYNAMIC_IMAGE=flaxandteal_${ARCHES_PROJECT}:$VERSION
 ARG WEB_ROOT=/web_root
 ARG ARCHES_ENVIRONMENT=production
-FROM $ARCHES_BASE
-FROM $ARCHES_BASE as arches_static_cache
+
+FROM $ARCHES_DYNAMIC_IMAGE as arches
 
 USER 0
 
@@ -52,15 +52,15 @@ ENV DJANGO_DEBUG=False \
 RUN useradd arches && mkdir -p /static_root && chown -R arches /static_root
 WORKDIR ${WEB_ROOT}/${ARCHES_PROJECT}
 
-FROM $ARCHES_DYNAMIC_IMAGE as arches_dynamic
-FROM arches_static_cache as arches
-ARG WEB_ROOT=/web_root
-ARG STATIC_ROOT=/static_root
-ARG ARCHES_PROJECT
-COPY --from=arches_dynamic ${WEB_ROOT}/entrypoint.sh ${WEB_ROOT}/entrypoint.sh
-COPY --from=arches_dynamic ${WEB_ROOT}/${ARCHES_PROJECT}/ /web_root/${ARCHES_PROJECT}/
+#OM $ARCHES_DYNAMIC_IMAGE as arches_dynamic
+#OM arches_static_cache as arches
+#ARG WEB_ROOT=/web_root
+#RG STATIC_ROOT=/static_root
+#G ARCHES_PROJECT
+#PY --from=arches_dynamic ${WEB_ROOT}/entrypoint.sh ${WEB_ROOT}/entrypoint.sh
+#PY --from=arches_dynamic ${WEB_ROOT}/${ARCHES_PROJECT}/ /web_root/${ARCHES_PROJECT}/
 # settings_docker.py
-COPY --from=arches_dynamic ${WEB_ROOT}/${ARCHES_PROJECT}/${ARCHES_PROJECT}/settings_local.py ${WEB_ROOT}/${ARCHES_PROJECT}/${ARCHES_PROJECT}/settings_local.py
+#Y --from=arches_dynamic ${WEB_ROOT}/${ARCHES_PROJECT}/${ARCHES_PROJECT}/settings_local.py ${WEB_ROOT}/${ARCHES_PROJECT}/${ARCHES_PROJECT}/settings_local.py
 
 RUN ${WEB_ROOT}/entrypoint.sh init_yarn_components
 
