@@ -49,7 +49,7 @@ ENV DJANGO_DEBUG=False \
     PYTHONUNBUFFERED=0 \
     TZ=PST \
     DJANGO_SETTINGS_MODULE=${ARCHES_PROJECT}.settings
-RUN useradd arches && mkdir -p /static_root && chown -R arches /static_root
+#N useradd arches && mkdir -p /static_root && chown -R arches /static_root
 WORKDIR ${WEB_ROOT}/${ARCHES_PROJECT}
 
 #OM $ARCHES_DYNAMIC_IMAGE as arches_dynamic
