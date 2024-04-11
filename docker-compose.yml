@@ -108,11 +108,12 @@ services:
         - ${ARCHES_PROJECT_ROOT}.:/web_root/$ARCHES_PROJECT
         - ${ARCHES_PROJECT_ROOT}./docker/entrypoint.sh:/web_root/entrypoint.sh
         - ${ARCHES_PROJECT_ROOT}./docker/settings_docker.py:/web_root/$ARCHES_PROJECT/$ARCHES_PROJECT/settings_local.py
-        # ${ARCHES_PROJECT_ROOT}./../arches-orm/arches_orm:/web_root/ENV/lib/python3.10/site-packages/arches_orm
+        - ${ARCHES_PROJECT_ROOT}./../arches-orm/arches_orm:/web_root/ENV/lib/python3.10/site-packages/arches_orm
       environment:
         - ARCHES_PROJECT=$ARCHES_PROJECT
         - INSTALL_DEFAULT_GRAPHS=False
         - INSTALL_DEFAULT_CONCEPTS=False
+        - GUNICORN_WORKER_TIMEOUT=300
         - PGUSERNAME=postgres
         - PGPASSWORD=postgres
         - PGDBNAME=arches
@@ -135,7 +136,6 @@ services:
         - db
         - elasticsearch
         - rabbitmq
-        - arches
         - cantaloupe
 
     arches_worker:
@@ -159,7 +159,7 @@ services:
         - ${ARCHES_PROJECT_ROOT}.:/web_root/$ARCHES_PROJECT
         - ${ARCHES_PROJECT_ROOT}./docker/entrypoint.sh:/web_root/entrypoint.sh
         - ${ARCHES_PROJECT_ROOT}./docker/settings_docker.py:/web_root/$ARCHES_PROJECT/$ARCHES_PROJECT/settings_local.py
-        # ${ARCHES_PROJECT_ROOT}./../arches-orm/arches_orm:/web_root/ENV/lib/python3.10/site-packages/arches_orm
+        - ${ARCHES_PROJECT_ROOT}./../arches-orm/arches_orm:/web_root/ENV/lib/python3.10/site-packages/arches_orm
       environment:
         - ARCHES_PROJECT=$ARCHES_PROJECT
         - INSTALL_DEFAULT_GRAPHS=False
