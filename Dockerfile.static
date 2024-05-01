@@ -4,8 +4,8 @@ ARG ARCHES_BASE=flaxandteal/arches_base
 ARG ARCHES_DYNAMIC_IMAGE=flaxandteal_${ARCHES_PROJECT}:$VERSION
 ARG WEB_ROOT=/web_root
 ARG ARCHES_ENVIRONMENT=production
-FROM $ARCHES_BASE
-FROM $ARCHES_BASE as arches_static_cache
+
+FROM $ARCHES_DYNAMIC_IMAGE as arches
 
 USER 0
 
@@ -49,18 +49,7 @@ ENV DJANGO_DEBUG=False \
     PYTHONUNBUFFERED=0 \
     TZ=PST \
     DJANGO_SETTINGS_MODULE=${ARCHES_PROJECT}.settings
-RUN useradd arches && mkdir -p /static_root && chown -R arches /static_root
 WORKDIR ${WEB_ROOT}/${ARCHES_PROJECT}
-
-FROM $ARCHES_DYNAMIC_IMAGE as arches_dynamic
-FROM arches_static_cache as arches
-ARG WEB_ROOT=/web_root
-ARG STATIC_ROOT=/static_root
-ARG ARCHES_PROJECT
-COPY --from=arches_dynamic ${WEB_ROOT}/entrypoint.sh ${WEB_ROOT}/entrypoint.sh
-COPY --from=arches_dynamic ${WEB_ROOT}/${ARCHES_PROJECT}/ /web_root/${ARCHES_PROJECT}/
-# settings_docker.py
-COPY --from=arches_dynamic ${WEB_ROOT}/${ARCHES_PROJECT}/${ARCHES_PROJECT}/settings_local.py ${WEB_ROOT}/${ARCHES_PROJECT}/${ARCHES_PROJECT}/settings_local.py
 
 RUN ${WEB_ROOT}/entrypoint.sh init_yarn_components
 
@@ -73,7 +62,6 @@ RUN (cd $WEB_ROOT/arches/arches && NODE_OPTIONS=--max_old_space_size=8192 NODE_P
 RUN (cd $WEB_ROOT/$ARCHES_PROJECT/$ARCHES_PROJECT && NODE_OPTIONS=--max_old_space_size=8192 NODE_PATH=./media/node_modules yarn install -D)
 RUN apt-get update && apt-get -y install python3-libxml2 git
 RUN /bin/bash -c ". ../ENV/bin/activate;\
-pip install pika django-debug-toolbar django-debug-toolbar-force django-authorization casbin-django-orm-adapter cachetools websockets git+https://github.com/flaxandteal/arches-orm@master;\
 python manage.py createcachetable;\
 python manage.py load_ontology -s ${ARCHES_PROJECT}/pkg/ontologies;\
 python manage.py packages -o load_package -s ${ARCHES_PROJECT}/pkg/ -y --no-business_data;\
