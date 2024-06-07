@@ -32,9 +32,13 @@ class ArchesProject:
         for submodule in root.glob("*/__init__.py"):
             if project_name:
                 raise RuntimeError("There should be exactly one Python package in the project root!")
-            project_name = str(submodule.parent.parts[-1])
+            name = str(submodule.parent.parts[-1])
+            if name in ['tests']:
+                continue
+            project_name = name
         if not project_name:
             raise RuntimeError("Could not find a Python project in the project root!")
+        
         return project_name
 
     def __init__(self, root):
