@@ -26,7 +26,7 @@ RUN echo "{}" > ${WEB_ROOT}/${ARCHES_PROJECT}/${ARCHES_PROJECT}/webpack/webpack-
 WORKDIR ${WEB_ROOT}/${ARCHES_PROJECT}/${ARCHES_PROJECT}
 RUN mkdir -p /static_root && chown -R arches /static_root
 WORKDIR ${WEB_ROOT}/${ARCHES_PROJECT}
-RUN ../entrypoint.sh install_yarn_components
+RUN ../entrypoint.sh install_npm_components
 ENTRYPOINT ../entrypoint.sh
 CMD run_arches
 USER 1000

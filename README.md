@@ -11,7 +11,7 @@ You probably want [the standard tooling](https://arches.readthedocs.io/en/stable
 ### I have no existing Arches project, but can use `arches-project` command
 
 Install the `arches-project` tool as per the [Arches documentation](https://arches.readthedocs.io/en/stable/).
-Note that it requires `yarn` as a dependency. Run:
+Note that it requires `npm` as a dependency. Run:
 
 ```
   arches-project create MYPROJECTNAME

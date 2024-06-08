@@ -21,24 +21,23 @@ if [[ -z ${ARCHES_PROJECT} ]]; then
 	PACKAGE_JSON_FOLDER=${ARCHES_ROOT}/arches/install
 else
 	APP_FOLDER=${WEB_ROOT}/${ARCHES_PROJECT}
-	# due to https://github.com/archesproject/arches/issues/4841, changes were made to yarn install
-	# and module deployment. Using the arches install directory for yarn.
+	# due to https://github.com/archesproject/arches/issues/4841, changes were made to npm install
+	# and module deployment. Using the arches install directory for npm.
 	# PTW PACKAGE_JSON_FOLDER=${ARCHES_ROOT}/arches/install
 	PACKAGE_JSON_FOLDER=${WEB_ROOT}/${ARCHES_PROJECT}/${ARCHES_PROJECT}
 fi
 
-# Read modules folder from yarn config file
+# Read modules folder from npm config file
 # Get string after '--install.modules-folder' -> get first word of the result 
 # -> remove line endlings -> trim quotes -> trim leading ./
-YARN_MODULES_FOLDER=${PACKAGE_JSON_FOLDER}/$(awk \
-	-F '--install.modules-folder' '{print $2}' ${PACKAGE_JSON_FOLDER}/.yarnrc \
+NPM_MODULES_FOLDER=${PACKAGE_JSON_FOLDER}/$(awk \
+	-F '--install.modules-folder' '{print $2}' ${PACKAGE_JSON_FOLDER} \
 	| awk '{print $1}' \
 	| tr -d $'\r' \
 	| tr -d '"' \
 	| sed -e "s/^\.\///g")
 
 export DJANGO_PORT=${DJANGO_PORT:-8000}
-#COUCHDB_URL="http://$COUCHDB_USER:$COUCHDB_PASS@$COUCHDB_HOST:$COUCHDB_PORT"
 STATIC_ROOT=${STATIC_ROOT:-/static_root}
 
 export ALLOW_BOOTSTRAP=${ALLOW_BOOTSTRAP:-}
@@ -59,7 +58,7 @@ cd_app_folder() {
 	echo "Current work directory: ${APP_FOLDER}"
 }
 
-cd_yarn_folder() {
+cd_npm_folder() {
 	cd ${PACKAGE_JSON_FOLDER}
 	echo "Current work directory: ${PACKAGE_JSON_FOLDER}"
 }
@@ -79,6 +78,7 @@ init_arches() {
 		echo ""
 	else
 		if [[ "${ALLOW_BOOTSTRAP}" == "True" ]]; then
+			echo "Database ${PGDBNAME} does not exists yet, starting setup..."
 			setup_arches
 		else
 			echo "Database ${PGDBNAME} does not exist yet, exiting until you 'entrypoint.sh bootstrap'..."
@@ -91,13 +91,14 @@ init_arches() {
 bootstrap() {
 	init_arches_project
 
-	init_yarn_components
+	init_npm_components
 
 	setup_arches
 
-	run_yarn_build_development
+	run_npm_build_development
 
 }
+
 
 # Setup Postgresql and Elasticsearch
 setup_arches() {
@@ -114,10 +115,6 @@ setup_arches() {
 	echo "Running: python manage.py setup_db --force"
 	python ${APP_FOLDER}/manage.py setup_db --force
 
-    #echo "Running: Creating couchdb system databases"
-    #curl -X PUT ${COUCHDB_URL}/_users
-    #curl -X PUT ${COUCHDB_URL}/_global_changes
-    #curl -X PUT ${COUCHDB_URL}/_replicator
 
 	if [[ "${INSTALL_DEFAULT_GRAPHS}" == "True" ]]; then
 		# Import graphs
@@ -209,23 +206,23 @@ set_dev_mode() {
 }
 
 
-# Yarn
-init_yarn_components() {
-	if [[ ! -d ${YARN_MODULES_FOLDER} ]] || [[ ! "$(ls ${YARN_MODULES_FOLDER})" ]]; then
-		echo "Yarn modules do not exist, installing..."
-		install_yarn_components
+# npm
+init_npm_components() {
+	if [[ ! -d ${NPM_MODULES_FOLDER} ]] || [[ ! "$(ls ${NPM_MODULES_FOLDER})" ]]; then
+		echo "npm modules do not exist, installing..."
+		install_npm_components
 	fi
 }
 
 # This is also done in Dockerfile, but that does not include user's custom Arches app package.json
 # Also, the packages folder may have been overlaid by a Docker volume.
-install_yarn_components() {
+install_npm_components() {
 	echo ""
 	echo ""
-	echo "----- INSTALLING YARN COMPONENTS -----"
+	echo "----- INSTALLING NPM COMPONENTS -----"
 	echo ""
-	cd_yarn_folder
-	yarn install -D
+	cd_npm_folder
+	npm install
 }
 
 #### Main commands
@@ -248,7 +245,7 @@ run_graphql_server() {
         uvicorn --host 0.0.0.0 --port 8000 ${ARCHES_PROJECT}.graph.asgi:app
 }
 
-run_yarn_start() {
+run_npm_start() {
 	echo ""
 	echo ""
 	echo "----- RUNNING YARN SERVER -----"
@@ -256,10 +253,10 @@ run_yarn_start() {
 	cd_app_folder
 	sleep 10
 	cd ${ARCHES_PROJECT}
-	yarn start
+	npm start
 }
 
-run_yarn_build_production() {
+run_npm_build_production() {
 	echo ""
 	echo ""
 	echo "----- RUNNING YARN SERVER -----"
@@ -267,10 +264,10 @@ run_yarn_build_production() {
 	cd_app_folder
 	sleep 10
 	cd ${ARCHES_PROJECT}
-	yarn build_production
+	npm build_production
 }
 
-run_yarn_build_development() {
+run_npm_build_development() {
 	echo ""
 	echo ""
 	echo "----- RUNNING YARN SERVER -----"
@@ -278,7 +275,7 @@ run_yarn_build_development() {
 	cd_app_folder
 	sleep 10
 	cd ${ARCHES_PROJECT}
-	yarn build_development
+	npm build_development
 }
 
 
@@ -398,7 +395,6 @@ collect_static_real(){
 	echo ""
 	cd_app_folder
 	python manage.py collectstatic --noinput
-	python manage.py compress --verbosity=3
 }
 
 
@@ -463,6 +459,8 @@ run_gunicorn_server() {
 run_arches() {
 
 	init_arches
+
+	init_npm_components
 
 	if [[ "${DJANGO_MODE}" == "DEV" ]]; then
 		set_dev_mode
@@ -553,17 +551,17 @@ do
 			wait_for_db
 			run_migrations
 		;;
-		install_yarn_components)
-			install_yarn_components
+		install_npm_components)
+			install_npm_components
 		;;
-		run_yarn_build_development)
-			run_yarn_build_development
+		run_npm_build_development)
+			run_npm_build_development
 		;;
-		run_yarn_build_production)
-			run_yarn_build_production
+		run_npm_build_production)
+			run_npm_build_production
 		;;
-		run_yarn_start)
-			run_yarn_start
+		run_npm_start)
+			run_npm_start
 		;;
 		help|-h)
 			display_help
