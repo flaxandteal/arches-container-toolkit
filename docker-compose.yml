@@ -37,7 +37,8 @@ services:
         - INSTALL_DEFAULT_CONCEPTS=False
         - PGUSERNAME=postgres
         - PGPASSWORD=postgres
-        - PGDBNAME=arches
+        - PGDBNAME=arches2
+        - CASBIN_RELOAD_QUEUE=True
         - PGHOST=db
         - PGPORT=5432
         - ESHOST=elasticsearch
@@ -79,7 +80,7 @@ services:
         - INSTALL_DEFAULT_CONCEPTS=False
         - PGUSERNAME=postgres
         - PGPASSWORD=postgres
-        - PGDBNAME=arches
+        - PGDBNAME=arches2
         - PGHOST=db
         - PGPORT=5432
         - ESHOST=elasticsearch
@@ -127,7 +128,7 @@ services:
         - GUNICORN_WORKER_TIMEOUT=300
         - PGUSERNAME=postgres
         - PGPASSWORD=postgres
-        - PGDBNAME=arches
+        - PGDBNAME=arches2
         - PGHOST=db
         - PGPORT=5432
         - ESHOST=elasticsearch
@@ -171,23 +172,21 @@ services:
         - ${ARCHES_PROJECT_ROOT}.:/web_root/$ARCHES_PROJECT
         - ${ARCHES_PROJECT_ROOT}./docker/entrypoint.sh:/web_root/entrypoint.sh
         - ${ARCHES_PROJECT_ROOT}./docker/settings_docker.py:/web_root/$ARCHES_PROJECT/$ARCHES_PROJECT/settings_local.py
-        # ${ARCHES_PROJECT_ROOT}./../arches-orm/arches_orm:/web_root/ENV/lib/python3.12/site-packages/arches_orm
-        # ${ARCHES_PROJECT_ROOT}./../arches-for-science/arches_for_science:/web_root/ENV/lib/python3.12/site-packages/arches_for_science
-        # ${ARCHES_PROJECT_ROOT}./../arches-her/arches_her:/web_root/ENV/lib/python3.12/site-packages/arches_her
-        # ${ARCHES_PROJECT_ROOT}./../arches_doorstep/arches_doorstep:/web_root/ENV/lib/python3.12/site-packages/arches_doorstep
+        - ${ARCHES_PROJECT_ROOT}./../arches-orm/arches_orm:/web_root/ENV/lib/python3.10/site-packages/arches_orm
       environment:
         - ARCHES_PROJECT=$ARCHES_PROJECT
         - INSTALL_DEFAULT_GRAPHS=False
         - INSTALL_DEFAULT_CONCEPTS=False
         - PGUSERNAME=postgres
         - PGPASSWORD=postgres
-        - PGDBNAME=arches
+        - PGDBNAME=arches2
         - PGHOST=db
         - PGPORT=5432
         - ESHOST=elasticsearch
         - ESPORT=9200
         - DJANGO_MODE=DEV
         - DJANGO_DEBUG=True
+        - CASBIN_RELOAD_QUEUE=True
         # - DJANGO_REMOTE_DEBUG=False
         - DOMAIN_NAMES=localhost
         - PYTHONUNBUFFERED=0
