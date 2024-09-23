@@ -35,6 +35,7 @@ services:
         - PGPASSWORD=postgres
         - PGDBNAME=arches2
         - CASBIN_RELOAD_QUEUE=True
+        - CASBIN_LISTEN=True
         - PGHOST=db
         - PGPORT=5432
         - ESHOST=elasticsearch
@@ -177,6 +178,7 @@ services:
         - DJANGO_MODE=DEV
         - DJANGO_DEBUG=True
         - CASBIN_RELOAD_QUEUE=True
+        - CASBIN_LISTEN=True
         # - DJANGO_REMOTE_DEBUG=False
         - DOMAIN_NAMES=localhost
         - PYTHONUNBUFFERED=0
