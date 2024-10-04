@@ -77,7 +77,9 @@ ARG STATIC_ROOT=/static_root
 ARG ARCHES_PROJECT
 COPY --from=arches ${WEB_ROOT}/${ARCHES_PROJECT}/${ARCHES_PROJECT}/media/* /usr/share/nginx/html/
 COPY --from=arches ${WEB_ROOT}/${ARCHES_PROJECT}/${ARCHES_PROJECT}/media/build/js/* /usr/share/nginx/html/js/
-COPY --from=arches ${WEB_ROOT}/${ARCHES_PROJECT}/${ARCHES_PROJECT}/webpack-stats.json /usr/share/nginx/webpack-stats.json
+COPY --from=arches ${WEB_ROOT}/${ARCHES_PROJECT}/webpack-stats.json /usr/share/nginx/webpack-stats.json
+COPY --from=arches ${WEB_ROOT}/${ARCHES_PROJECT}/.frontend-configuration-settings.json /usr/share/nginx/.frontend-configuration-settings.json
+COPY --from=arches ${WEB_ROOT}/${ARCHES_PROJECT}/.tsconfig-paths.json /usr/share/nginx/.tsconfig-paths.json
 COPY --from=arches ${STATIC_ROOT} /usr/share/nginx/html/static
 #RUN mv /usr/share/nginx/html/static/* /usr/share/nginx/html
 
