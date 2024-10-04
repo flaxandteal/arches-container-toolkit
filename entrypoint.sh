@@ -264,7 +264,7 @@ run_npm_build_production() {
 	cd_app_folder
 	sleep 10
 	cd ${ARCHES_PROJECT}
-	npm build_production
+	npm run build_production
 }
 
 run_npm_build_development() {
@@ -275,7 +275,7 @@ run_npm_build_development() {
 	cd_app_folder
 	sleep 10
 	cd ${ARCHES_PROJECT}
-	npm build_development
+	npm run build_development
 }
 
 

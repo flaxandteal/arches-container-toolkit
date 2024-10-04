@@ -9,6 +9,7 @@ services:
 
     arches:
       restart: unless-stopped
+      user: root # frontend configuration
       entrypoint: ["../entrypoint.sh"]
       build:
         context: ${ARCHES_PROJECT_ROOT}.
