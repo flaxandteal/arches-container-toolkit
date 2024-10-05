@@ -46,7 +46,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@98669ae865ea3cffbcbaa878cf57c20bbf1c6c38
         with:
-          images: ghcr.io/flaxandteal/arches_${{ env.ARCHES_PROJECT }}
+          images: ghcr.io/${{ github.repository }}
       - name: Build and push Docker image
         id: build
         uses: docker/build-push-action@v5
@@ -104,7 +104,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@98669ae865ea3cffbcbaa878cf57c20bbf1c6c38
         with:
-          images: ghcr.io/flaxandteal/arches_${{ env.ARCHES_PROJECT }}_static
+          images: ghcr.io/${{ github.repository }}_static
       - name: Build and push Docker image
         id: buildx
         uses: docker/build-push-action@v2
@@ -228,7 +228,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@98669ae865ea3cffbcbaa878cf57c20bbf1c6c38
         with:
-          images: ghcr.io/flaxandteal/arches_${{ env.ARCHES_PROJECT }}_static_py
+          images: ghcr.io/${{ github.repository }}_static_py
       - name: Set up Docker Context for Buildx
         id: buildx-context
         run: |
