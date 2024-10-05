@@ -64,7 +64,7 @@ RUN apt-get update && apt-get -y install python3-libxml2 git
 RUN /bin/bash -c ". ../ENV/bin/activate;\
 python manage.py createcachetable;\
 python manage.py load_ontology -s ${ARCHES_PROJECT}/pkg/ontologies;\
-python manage.py packages -o load_package -s ${ARCHES_PROJECT}/pkg/ -y --no-business_data;\
+echo 'Need to replace: python manage.py packages -o load_package -s ${ARCHES_PROJECT}/pkg/ -y --no-business_data';\
 python manage.py es index_database\
 ";
 COPY ./${ARCHES_PROJECT}/settings.py ${WEB_ROOT}/${ARCHES_PROJECT}/${ARCHES_PROJECT}/settings.py
