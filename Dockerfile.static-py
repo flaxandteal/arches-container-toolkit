@@ -12,7 +12,7 @@ ARG STATIC_ROOT=/static_root
 COPY --from=arches_static /usr/share/nginx/webpack-stats.json ${WEB_ROOT}/${ARCHES_PROJECT}/webpack/webpack-stats.json
 COPY --from=arches_static /usr/share/nginx/.frontend-configuration-settings.json ${WEB_ROOT}/${ARCHES_PROJECT}/.frontend-configuration-settings.json
 COPY --from=arches_static /usr/share/nginx/.tsconfig-paths.json ${WEB_ROOT}/${ARCHES_PROJECT}/.tsconfig-paths.json
-RUN mkdir -p ${STATIC_ROOT}/CACHE
+# RUN mkdir -p ${STATIC_ROOT}/CACHE
 # COPY --from=arches_static /usr/share/nginx/html/static/CACHE/manifest.json ${STATIC_ROOT}/CACHE/manifest.json
 COPY --from=arches_static /usr/share/nginx/html ${WEB_ROOT}/${ARCHES_PROJECT}/${ARCHES_PROJECT}/media/build
 
