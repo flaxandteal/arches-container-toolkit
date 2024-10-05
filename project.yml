@@ -7,6 +7,8 @@ env:
 jobs:
   Build-Arches:
     runs-on: [self-hosted]
+    permissions:
+      packages: write
     outputs:
       image: ${{ steps.extract_image_name.outputs.image_name }}
     steps:
@@ -67,6 +69,8 @@ jobs:
   Build-Arches-Static:
     runs-on: [self-hosted]
     needs: [Build-Arches]
+    permissions:
+      packages: write
     outputs:
       image: ${{ steps.extract_image_name.outputs.image_name }}
 
@@ -206,6 +210,8 @@ jobs:
   Build-Arches-Final:
     needs: [Build-Arches-Static, Build-Arches]
     runs-on: [self-hosted]
+    permissions:
+      packages: write
     outputs:
       image: ${{ steps.extract_image_name.outputs.image_name }}
     steps:
