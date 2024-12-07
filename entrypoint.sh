@@ -30,12 +30,7 @@ fi
 # Read modules folder from npm config file
 # Get string after '--install.modules-folder' -> get first word of the result 
 # -> remove line endlings -> trim quotes -> trim leading ./
-NPM_MODULES_FOLDER=${PACKAGE_JSON_FOLDER}/$(awk \
-	-F '--install.modules-folder' '{print $2}' ${PACKAGE_JSON_FOLDER} \
-	| awk '{print $1}' \
-	| tr -d $'\r' \
-	| tr -d '"' \
-	| sed -e "s/^\.\///g")
+NPM_MODULES_FOLDER=${PACKAGE_JSON_FOLDER}/media/node_modules
 
 export DJANGO_PORT=${DJANGO_PORT:-8000}
 STATIC_ROOT=${STATIC_ROOT:-/static_root}
