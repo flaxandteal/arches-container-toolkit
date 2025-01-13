@@ -4,9 +4,21 @@ TOOLKIT_REPO = https://github.com/flaxandteal/arches-container-toolkit
 TOOLKIT_FOLDER = docker
 TOOLKIT_RELEASE = main
 ARCHES_PROJECT ?= $(shell ls -1 */__init__.py | head -n 1 | sed 's/\/.*//g')
-ARCHES_BASE = ghcr.io/flaxandteal/arches-base:coral
+ifeq ($(wildcard /../arches),)
+	ARCHES_ROOT=$(realpath ../arches)
+else
+	
+	ARCHES_ROOT=
+endif
+ifneq ($(ARCHES_ROOT),)
+  DOCKER_COMPOSE_FILES = -f docker/docker-compose.yml -f docker/docker-compose.override.yml
+else
+  DOCKER_COMPOSE_FILES = -f docker/docker-compose.yml
+endif
+APPS_VOLUME_MOUNTS=$(shell if [ -d "apps" ]; then for dir in apps/*; do if [ -d "$$dir" ]; then echo "-v $$(pwd)/$$dir:/web_root/$$dir "; fi; done; fi)
+ARCHES_BASE = ghcr.io/flaxandteal/arches-base:docker-7.6
 ARCHES_PROJECT_ROOT = $(shell pwd)/
-DOCKER_COMPOSE_COMMAND = ARCHES_PROJECT_ROOT=$(ARCHES_PROJECT_ROOT) ARCHES_BASE=$(ARCHES_BASE) ARCHES_PROJECT=$(ARCHES_PROJECT) docker-compose -p $(ARCHES_PROJECT) -f docker/docker-compose.yml
+DOCKER_COMPOSE_COMMAND = ARCHES_PROJECT_ROOT=$(ARCHES_PROJECT_ROOT) ARCHES_BASE=$(ARCHES_BASE) ARCHES_PROJECT=$(ARCHES_PROJECT) ARCHES_ROOT=$(ARCHES_ROOT) docker compose -p $(ARCHES_PROJECT) $(DOCKER_COMPOSE_FILES)
 CMD ?=
 
 create: docker
