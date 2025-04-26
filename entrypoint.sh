@@ -30,7 +30,7 @@ fi
 # Read modules folder from npm config file
 # Get string after '--install.modules-folder' -> get first word of the result 
 # -> remove line endlings -> trim quotes -> trim leading ./
-NPM_MODULES_FOLDER=${PACKAGE_JSON_FOLDER}/media/node_modules
+NPM_MODULES_FOLDER=${PACKAGE_JSON_FOLDER}/node_modules
 
 export DJANGO_PORT=${DJANGO_PORT:-8000}
 STATIC_ROOT=${STATIC_ROOT:-/static_root}
