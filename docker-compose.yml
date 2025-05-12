@@ -20,20 +20,20 @@ services:
       volumes:
         - arches-log:/arches/arches/logs
         - arches-static:/static_root
-        - $ARCHES_ROOT:/web_root/arches
+        # - $ARCHES_ROOT:/web_root/arches
         # $ARCHES_ROOT/docker/gunicorn_config.py:/web_root/arches/gunicorn_config.py
         # ./$ARCHES_PROJECT/media/node_modules/arches/docker/gunicorn_config.py:/web_root/arches/arches/gunicorn_config.py
         - ${ARCHES_PROJECT_ROOT}.:/web_root/$ARCHES_PROJECT
         - ${ARCHES_PROJECT_ROOT}./docker/entrypoint.sh:/web_root/entrypoint.sh
         - ${ARCHES_PROJECT_ROOT}./docker/settings_docker.py:/web_root/$ARCHES_PROJECT/$ARCHES_PROJECT/settings_local.py
-        - ${ARCHES_PROJECT_ROOT}./../arches-orm/arches_orm:/web_root/ENV/lib/python3.10/site-packages/arches_orm
+        # - ${ARCHES_PROJECT_ROOT}./../arches-orm/arches_orm:/web_root/ENV/lib/python3.10/site-packages/arches_orm
       environment:
         - ARCHES_PROJECT=$ARCHES_PROJECT
         - INSTALL_DEFAULT_GRAPHS=False
         - INSTALL_DEFAULT_CONCEPTS=False
         - PGUSERNAME=postgres
         - PGPASSWORD=postgres
-        - PGDBNAME=arches2
+        - PGDBNAME=arches
         - CASBIN_RELOAD_QUEUE=True
         - CASBIN_LISTEN=True
         - PGHOST=db
@@ -77,7 +77,7 @@ services:
         - INSTALL_DEFAULT_CONCEPTS=False
         - PGUSERNAME=postgres
         - PGPASSWORD=postgres
-        - PGDBNAME=arches2
+        - PGDBNAME=arches
         - PGHOST=db
         - PGPORT=5432
         - ESHOST=elasticsearch
@@ -106,13 +106,13 @@ services:
       volumes:
         - arches-log:/arches/arches/logs
         - arches-static:/static_root
-        - $ARCHES_ROOT:/web_root/arches
+        # - $ARCHES_ROOT:/web_root/arches
         # $ARCHES_ROOT/docker/gunicorn_config.py:/web_root/arches/gunicorn_config.py
         # ./$ARCHES_PROJECT/media/node_modules/arches/docker/gunicorn_config.py:/web_root/arches/arches/gunicorn_config.py
         - ${ARCHES_PROJECT_ROOT}.:/web_root/$ARCHES_PROJECT
         - ${ARCHES_PROJECT_ROOT}./docker/entrypoint.sh:/web_root/entrypoint.sh
         - ${ARCHES_PROJECT_ROOT}./docker/settings_docker.py:/web_root/$ARCHES_PROJECT/$ARCHES_PROJECT/settings_local.py
-        - ${ARCHES_PROJECT_ROOT}./../arches-orm/arches_orm:/web_root/ENV/lib/python3.10/site-packages/arches_orm
+        # - ${ARCHES_PROJECT_ROOT}./../arches-orm/arches_orm:/web_root/ENV/lib/python3.10/site-packages/arches_orm
       environment:
         - ARCHES_PROJECT=$ARCHES_PROJECT
         - INSTALL_DEFAULT_GRAPHS=False
@@ -120,7 +120,7 @@ services:
         - GUNICORN_WORKER_TIMEOUT=300
         - PGUSERNAME=postgres
         - PGPASSWORD=postgres
-        - PGDBNAME=arches2
+        - PGDBNAME=arches
         - PGHOST=db
         - PGPORT=5432
         - ESHOST=elasticsearch
@@ -157,20 +157,20 @@ services:
       volumes:
         - arches-log:/arches/arches/logs
         - arches-static:/static_root
-        - $ARCHES_ROOT:/web_root/arches
+        # - $ARCHES_ROOT:/web_root/arches
         # $ARCHES_ROOT/docker/gunicorn_config.py:/web_root/arches/gunicorn_config.py
         # ./$ARCHES_PROJECT/media/node_modules/arches/docker/gunicorn_config.py:/web_root/arches/arches/gunicorn_config.py
         - ${ARCHES_PROJECT_ROOT}.:/web_root/$ARCHES_PROJECT
         - ${ARCHES_PROJECT_ROOT}./docker/entrypoint.sh:/web_root/entrypoint.sh
         - ${ARCHES_PROJECT_ROOT}./docker/settings_docker.py:/web_root/$ARCHES_PROJECT/$ARCHES_PROJECT/settings_local.py
-        - ${ARCHES_PROJECT_ROOT}./../arches-orm/arches_orm:/web_root/ENV/lib/python3.10/site-packages/arches_orm
+        # - ${ARCHES_PROJECT_ROOT}./../arches-orm/arches_orm:/web_root/ENV/lib/python3.10/site-packages/arches_orm
       environment:
         - ARCHES_PROJECT=$ARCHES_PROJECT
         - INSTALL_DEFAULT_GRAPHS=False
         - INSTALL_DEFAULT_CONCEPTS=False
         - PGUSERNAME=postgres
         - PGPASSWORD=postgres
-        - PGDBNAME=arches2
+        - PGDBNAME=arches
         - PGHOST=db
         - PGPORT=5432
         - ESHOST=elasticsearch
@@ -200,8 +200,8 @@ services:
       # template directory created
       image: kartoza/postgis:12.0
       volumes:
-          - postgres2-data:/var/lib/postgresql
-          - postgres2-log:/var/log/postgresql
+          - postgres-data:/var/lib/postgresql
+          - postgres-log:/var/log/postgresql
           - ${ARCHES_PROJECT_ROOT}./docker/init-unix.sql:/docker-entrypoint-initdb.d/init.sql # to set up the DB template
       ports:
         - '5432:5432'
@@ -240,7 +240,7 @@ services:
 volumes:
     arches-log:
     arches-static:
-    postgres2-log:
-    postgres2-data:
+    postgres-log:
+    postgres-data:
     elasticsearch-data:
     cantaloupe-data:
