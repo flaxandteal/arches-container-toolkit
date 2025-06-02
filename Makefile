@@ -110,7 +110,7 @@ manage: docker
 
 .PHONY: webpack
 webpack: docker
-	$(DOCKER_COMPOSE_COMMAND) run --entrypoint /bin/bash arches_worker -c '. ../ENV/bin/activate; cd $(ARCHES_PROJECT); DJANGO_MODE=DEV NODE_PATH=./media/node_modules NODE_OPTIONS=--max_old_space_size=8192 node --inspect ./media/node_modules/.bin/webpack --config webpack/webpack.config.dev.js'
+	$(DOCKER_COMPOSE_COMMAND) run --entrypoint /bin/bash arches_worker -c '. ../ENV/bin/activate; DJANGO_MODE=DEV NODE_PATH=./node_modules NODE_OPTIONS=--max_old_space_size=8192 node --inspect ./node_modules/.bin/webpack --config webpack/webpack.config.dev.js'
 
 .PHONY: clean
 clean: docker
