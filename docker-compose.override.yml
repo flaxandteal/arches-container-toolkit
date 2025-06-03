@@ -1,0 +1,14 @@
+version: '3.8'
+services:
+  arches:
+    volumes:
+      - ${ARCHES_ROOT}:/web_root/arches
+      - ${ARCHES_ROOT}/docker/gunicorn_config.py:/web_root/arches/gunicorn_config.py
+  arches_api:
+    volumes:
+      - ${ARCHES_ROOT}:/web_root/arches
+      - ${ARCHES_ROOT}/docker/gunicorn_config.py:/web_root/arches/gunicorn_config.py
+  arches_worker:
+    volumes:
+      - ${ARCHES_ROOT}:/web_root/arches
+      - ${ARCHES_ROOT}/docker/gunicorn_config.py:/web_root/arches/gunicorn_config.py
