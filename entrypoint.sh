@@ -24,7 +24,7 @@ else
 	# due to https://github.com/archesproject/arches/issues/4841, changes were made to npm install
 	# and module deployment. Using the arches install directory for npm.
 	# PTW PACKAGE_JSON_FOLDER=${ARCHES_ROOT}/arches/install
-	PACKAGE_JSON_FOLDER=${WEB_ROOT}/${ARCHES_PROJECT}/${ARCHES_PROJECT}
+	PACKAGE_JSON_FOLDER=${WEB_ROOT}/${ARCHES_PROJECT}
 fi
 
 # Read modules folder from npm config file
