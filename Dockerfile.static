@@ -69,6 +69,7 @@ python manage.py es index_database\
 ";
 COPY ./${ARCHES_PROJECT}/settings.py ${WEB_ROOT}/${ARCHES_PROJECT}/${ARCHES_PROJECT}/settings.py
 RUN echo $WEB_ROOT "|" $ARCHES_PROJECT && ${WEB_ROOT}/entrypoint.sh run_arches
+RUN echo $WEB_ROOT "|" $ARCHES_PROJECT && rm -f ${WEB_ROOT}/${ARCHES_PROJECT}/.frontend-configuration-settings.json && /bin/bash -c ". ../ENV/bin/activate; python manage.py check" && cat ${WEB_ROOT}/${ARCHES_PROJECT}/.frontend-configuration-settings.json
 RUN echo $WEB_ROOT "|" $ARCHES_PROJECT && ${WEB_ROOT}/entrypoint.sh run_npm_build_${ARCHES_ENVIRONMENT}
 
 FROM nginxinc/nginx-unprivileged:1.21.5-alpine
