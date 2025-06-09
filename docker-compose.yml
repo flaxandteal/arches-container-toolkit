@@ -8,6 +8,7 @@ services:
         - 8182:8182
 
     arches:
+      user: root
       restart: unless-stopped
       entrypoint: ["../entrypoint.sh"]
       build:
@@ -26,8 +27,10 @@ services:
         - ${ARCHES_PROJECT_ROOT}.:/web_root/$ARCHES_PROJECT
         - ${ARCHES_PROJECT_ROOT}./docker/entrypoint.sh:/web_root/entrypoint.sh
         - ${ARCHES_PROJECT_ROOT}./docker/settings_docker.py:/web_root/$ARCHES_PROJECT/$ARCHES_PROJECT/settings_local.py
-        - ${ARCHES_PROJECT_ROOT}./../arches-orm/arches_orm:/web_root/ENV/lib/python3.12/site-packages/arches_orm
-        - ${ARCHES_PROJECT_ROOT}./../arches_doorstep/arches_doorstep:/web_root/ENV/lib/python3.12/site-packages/arches_doorstep
+        # ${ARCHES_PROJECT_ROOT}./../arches-orm/arches_orm:/web_root/ENV/lib/python3.12/site-packages/arches_orm
+        # ${ARCHES_PROJECT_ROOT}./../arches-for-science/arches_for_science:/web_root/ENV/lib/python3.12/site-packages/arches_for_science
+        # ${ARCHES_PROJECT_ROOT}./../arches-her/arches_her:/web_root/ENV/lib/python3.12/site-packages/arches_her
+        # ${ARCHES_PROJECT_ROOT}./../arches_doorstep/arches_doorstep:/web_root/ENV/lib/python3.12/site-packages/arches_doorstep
       environment:
         - ARCHES_PROJECT=$ARCHES_PROJECT
         - INSTALL_DEFAULT_GRAPHS=False
@@ -111,8 +114,10 @@ services:
         - ${ARCHES_PROJECT_ROOT}.:/web_root/$ARCHES_PROJECT
         - ${ARCHES_PROJECT_ROOT}./docker/entrypoint.sh:/web_root/entrypoint.sh
         - ${ARCHES_PROJECT_ROOT}./docker/settings_docker.py:/web_root/$ARCHES_PROJECT/$ARCHES_PROJECT/settings_local.py
-        - ${ARCHES_PROJECT_ROOT}./../arches-orm/arches_orm:/web_root/ENV/lib/python3.12/site-packages/arches_orm
-        - ${ARCHES_PROJECT_ROOT}./../arches_doorstep/arches_doorstep:/web_root/ENV/lib/python3.12/site-packages/arches_doorstep
+        # ${ARCHES_PROJECT_ROOT}./../arches-orm/arches_orm:/web_root/ENV/lib/python3.12/site-packages/arches_orm
+        # ${ARCHES_PROJECT_ROOT}./../arches_doorstep/arches_doorstep:/web_root/ENV/lib/python3.12/site-packages/arches_doorstep
+        # ${ARCHES_PROJECT_ROOT}./../arches-for-science/arches_for_science:/web_root/ENV/lib/python3.12/site-packages/arches_for_science
+        # ${ARCHES_PROJECT_ROOT}./../arches-her/arches_her:/web_root/ENV/lib/python3.12/site-packages/arches_her
         #- ${ARCHES_PROJECT_ROOT}./../.env/lib/python3.11/site-packages/graphql:/web_root/ENV/lib/python3.12/site-packages/graphql
       environment:
         - ARCHES_PROJECT=$ARCHES_PROJECT
@@ -166,8 +171,10 @@ services:
         - ${ARCHES_PROJECT_ROOT}.:/web_root/$ARCHES_PROJECT
         - ${ARCHES_PROJECT_ROOT}./docker/entrypoint.sh:/web_root/entrypoint.sh
         - ${ARCHES_PROJECT_ROOT}./docker/settings_docker.py:/web_root/$ARCHES_PROJECT/$ARCHES_PROJECT/settings_local.py
-        - ${ARCHES_PROJECT_ROOT}./../arches-orm/arches_orm:/web_root/ENV/lib/python3.12/site-packages/arches_orm
-        - ${ARCHES_PROJECT_ROOT}./../arches_doorstep/arches_doorstep:/web_root/ENV/lib/python3.12/site-packages/arches_doorstep
+        # ${ARCHES_PROJECT_ROOT}./../arches-orm/arches_orm:/web_root/ENV/lib/python3.12/site-packages/arches_orm
+        # ${ARCHES_PROJECT_ROOT}./../arches-for-science/arches_for_science:/web_root/ENV/lib/python3.12/site-packages/arches_for_science
+        # ${ARCHES_PROJECT_ROOT}./../arches-her/arches_her:/web_root/ENV/lib/python3.12/site-packages/arches_her
+        # ${ARCHES_PROJECT_ROOT}./../arches_doorstep/arches_doorstep:/web_root/ENV/lib/python3.12/site-packages/arches_doorstep
       environment:
         - ARCHES_PROJECT=$ARCHES_PROJECT
         - INSTALL_DEFAULT_GRAPHS=False
