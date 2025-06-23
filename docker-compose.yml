@@ -28,12 +28,19 @@ services:
         - ${ARCHES_PROJECT_ROOT}./docker/settings_docker.py:/web_root/$ARCHES_PROJECT/$ARCHES_PROJECT/settings_local.py
         - ${ARCHES_PROJECT_ROOT}./../arches-orm/arches_orm:/web_root/ENV/lib/python3.10/site-packages/arches_orm
       environment:
+        # EMAIL_HOST_PASSWORD=
+        # EMAIL_HOST_USER=
+        # EMAIL_BACKEND=
+        # DEFAULT_FROM_EMAIL=
+        # EMAIL_PORT=
+        # EMAIL_HOST=
+        # EMAIL_USE_TLS=
         - ARCHES_PROJECT=$ARCHES_PROJECT
         - INSTALL_DEFAULT_GRAPHS=False
         - INSTALL_DEFAULT_CONCEPTS=False
         - PGUSERNAME=postgres
         - PGPASSWORD=postgres
-        - PGDBNAME=arches2
+        - PGDBNAME=arches
         - CASBIN_RELOAD_QUEUE=True
         - CASBIN_LISTEN=True
         - PGHOST=db
@@ -43,6 +50,7 @@ services:
         - CELERY_BROKER_URL=amqp://rabbitmq:rabbitmq@rabbitmq
         - DJANGO_MODE=PROD
         - DJANGO_DEBUG=True
+        - DJANGO_SECRET_KEY="0o2(g1hg#z@kf76@)hp=o4n9+#7_z1kj6z19dqsc3h!pp*6+n_" # ONLY FOR LOCAL
         - DOMAIN_NAMES=localhost
         - PYTHONUNBUFFERED=0
         - TZ=PST
@@ -77,70 +85,18 @@ services:
         - INSTALL_DEFAULT_CONCEPTS=False
         - PGUSERNAME=postgres
         - PGPASSWORD=postgres
-        - PGDBNAME=arches2
+        - PGDBNAME=arches
         - PGHOST=db
         - PGPORT=5432
         - ESHOST=elasticsearch
         - ESPORT=9200
+        - DJANGO_SECRET_KEY="0o2(g1hg#z@kf76@)hp=o4n9+#7_z1kj6z19dqsc3h!pp*6+n_" # ONLY FOR LOCAL
         - DJANGO_MODE=DEV
         - DJANGO_DEBUG=True
         # - DJANGO_REMOTE_DEBUG=False
         - DOMAIN_NAMES=localhost
         - PYTHONUNBUFFERED=0
         - TZ=PST
-
-    arches_api:
-      profiles: ["api"]
-      image: arches_${ARCHES_PROJECT}:latest
-      restart: unless-stopped
-      entrypoint: ["../entrypoint.sh"]
-      build:
-        context: ${ARCHES_PROJECT_ROOT}.
-        dockerfile: ${ARCHES_PROJECT_ROOT}./docker/Dockerfile
-        args:
-          - ARCHES_PROJECT=$ARCHES_PROJECT
-          - ARCHES_BASE=$ARCHES_BASE
-      command: run_api
-      ports:
-        - '8001:8000'
-      volumes:
-        - arches-log:/arches/arches/logs
-        - arches-static:/static_root
-        - $ARCHES_ROOT:/web_root/arches
-        # $ARCHES_ROOT/docker/gunicorn_config.py:/web_root/arches/gunicorn_config.py
-        # ./$ARCHES_PROJECT/media/node_modules/arches/docker/gunicorn_config.py:/web_root/arches/arches/gunicorn_config.py
-        - ${ARCHES_PROJECT_ROOT}.:/web_root/$ARCHES_PROJECT
-        - ${ARCHES_PROJECT_ROOT}./docker/entrypoint.sh:/web_root/entrypoint.sh
-        - ${ARCHES_PROJECT_ROOT}./docker/settings_docker.py:/web_root/$ARCHES_PROJECT/$ARCHES_PROJECT/settings_local.py
-        - ${ARCHES_PROJECT_ROOT}./../arches-orm/arches_orm:/web_root/ENV/lib/python3.10/site-packages/arches_orm
-      environment:
-        - ARCHES_PROJECT=$ARCHES_PROJECT
-        - INSTALL_DEFAULT_GRAPHS=False
-        - INSTALL_DEFAULT_CONCEPTS=False
-        - GUNICORN_WORKER_TIMEOUT=300
-        - PGUSERNAME=postgres
-        - PGPASSWORD=postgres
-        - PGDBNAME=arches2
-        - PGHOST=db
-        - PGPORT=5432
-        - ESHOST=elasticsearch
-        - ESPORT=9200
-        - DJANGO_MODE=DEV
-        - DJANGO_DEBUG=True
-        # - DJANGO_REMOTE_DEBUG=False
-        - DOMAIN_NAMES=localhost
-        - PYTHONUNBUFFERED=0
-        - CELERY_BROKER_URL=amqp://rabbitmq:rabbitmq@rabbitmq
-        - RABBITMQ_USER=rabbitmq
-        - RABBITMQ_PASS=rabbitmq
-        - CANTALOUPE_HOST=cantaloupe
-        - CANTALOUPE_PORT=8182
-        - TZ=PST
-      depends_on:
-        - db
-        - elasticsearch
-        - rabbitmq
-        - cantaloupe
 
     arches_worker:
       image: arches_${ARCHES_PROJECT}:latest
@@ -163,20 +119,21 @@ services:
         - ${ARCHES_PROJECT_ROOT}.:/web_root/$ARCHES_PROJECT
         - ${ARCHES_PROJECT_ROOT}./docker/entrypoint.sh:/web_root/entrypoint.sh
         - ${ARCHES_PROJECT_ROOT}./docker/settings_docker.py:/web_root/$ARCHES_PROJECT/$ARCHES_PROJECT/settings_local.py
-        - ${ARCHES_PROJECT_ROOT}./../arches-orm/arches_orm:/web_root/ENV/lib/python3.10/site-packages/arches_orm
+        - ${ARCHES_PROJECT_ROOT}./../arches-orm/arches_orm:/web_root/ENV/lib/python3.12/site-packages/arches_orm
       environment:
         - ARCHES_PROJECT=$ARCHES_PROJECT
         - INSTALL_DEFAULT_GRAPHS=False
         - INSTALL_DEFAULT_CONCEPTS=False
         - PGUSERNAME=postgres
         - PGPASSWORD=postgres
-        - PGDBNAME=arches2
+        - PGDBNAME=arches
         - PGHOST=db
         - PGPORT=5432
         - ESHOST=elasticsearch
         - ESPORT=9200
         - DJANGO_MODE=DEV
         - DJANGO_DEBUG=True
+        - DJANGO_SECRET_KEY="0o2(g1hg#z@kf76@)hp=o4n9+#7_z1kj6z19dqsc3h!pp*6+n_" # ONLY FOR LOCAL
         - CASBIN_RELOAD_QUEUE=True
         - CASBIN_LISTEN=True
         # - DJANGO_REMOTE_DEBUG=False
