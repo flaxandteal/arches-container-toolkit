@@ -21,21 +21,15 @@ if [[ -z ${ARCHES_PROJECT} ]]; then
 	PACKAGE_JSON_FOLDER=${ARCHES_ROOT}/arches/install
 else
 	APP_FOLDER=${WEB_ROOT}/${ARCHES_PROJECT}
-	# due to https://github.com/archesproject/arches/issues/4841, changes were made to yarn install
-	# and module deployment. Using the arches install directory for yarn.
+	# due to https://github.com/archesproject/arches/issues/4841, changes were made to npm install
+	# and module deployment. Using the arches install directory for npm.
 	# PTW PACKAGE_JSON_FOLDER=${ARCHES_ROOT}/arches/install
 	PACKAGE_JSON_FOLDER=${WEB_ROOT}/${ARCHES_PROJECT}/${ARCHES_PROJECT}
 fi
 
-# Read modules folder from yarn config file
-# Get string after '--install.modules-folder' -> get first word of the result 
-# -> remove line endlings -> trim quotes -> trim leading ./
-YARN_MODULES_FOLDER=${PACKAGE_JSON_FOLDER}/$(awk \
-	-F '--install.modules-folder' '{print $2}' ${PACKAGE_JSON_FOLDER}/.yarnrc \
-	| awk '{print $1}' \
-	| tr -d $'\r' \
-	| tr -d '"' \
-	| sed -e "s/^\.\///g")
+# Read modules folder - using npm now instead of yarn
+# For npm, modules are always in node_modules
+YARN_MODULES_FOLDER=${PACKAGE_JSON_FOLDER}/node_modules
 
 export DJANGO_PORT=${DJANGO_PORT:-8000}
 #COUCHDB_URL="http://$COUCHDB_USER:$COUCHDB_PASS@$COUCHDB_HOST:$COUCHDB_PORT"
@@ -59,7 +53,7 @@ cd_app_folder() {
 	echo "Current work directory: ${APP_FOLDER}"
 }
 
-cd_yarn_folder() {
+cd_npm_folder() {
 	cd ${PACKAGE_JSON_FOLDER}
 	echo "Current work directory: ${PACKAGE_JSON_FOLDER}"
 }
@@ -91,11 +85,11 @@ init_arches() {
 bootstrap() {
 	init_arches_project
 
-	init_yarn_components
+	init_npm_components
 
 	setup_arches
 
-	run_yarn_build_development
+	run_npm_build_development
 
 }
 
@@ -161,6 +155,7 @@ setup_arches() {
 
 wait_for_db() {
 	echo "Testing if database server is up..."
+	return_code=1
 	while [[ ! ${return_code} == 0 ]]
 	do
         psql --host=${PGHOST} --port=${PGPORT} --user=${PGUSERNAME} --dbname=postgres -c "select 1" >&/dev/null
@@ -170,10 +165,11 @@ wait_for_db() {
 	echo "Database server is up"
 
     echo "Testing if Elasticsearch is up..."
-    while [[ ! ${return_code} == 0 ]]
+    es_return_code=1
+    while [[ ! ${es_return_code} == 0 ]]
     do
-        curl -s "http://${ESHOST}:${ESPORT}/_cluster/health?wait_for_status=green&timeout=60s" >&/dev/null
-        return_code=$?
+        curl -s "http://${ESHOST}:${ESPORT}/_cluster/health?wait_for_status=yellow&timeout=60s" >&/dev/null
+        es_return_code=$?
         sleep 1
     done
     echo "Elasticsearch is up"
@@ -209,23 +205,23 @@ set_dev_mode() {
 }
 
 
-# Yarn
-init_yarn_components() {
+# NPM
+init_npm_components() {
 	if [[ ! -d ${YARN_MODULES_FOLDER} ]] || [[ ! "$(ls ${YARN_MODULES_FOLDER})" ]]; then
-		echo "Yarn modules do not exist, installing..."
-		install_yarn_components
+		echo "NPM modules do not exist, installing..."
+		install_npm_components
 	fi
 }
 
 # This is also done in Dockerfile, but that does not include user's custom Arches app package.json
 # Also, the packages folder may have been overlaid by a Docker volume.
-install_yarn_components() {
+install_npm_components() {
 	echo ""
 	echo ""
-	echo "----- INSTALLING YARN COMPONENTS -----"
+	echo "----- INSTALLING NPM COMPONENTS -----"
 	echo ""
-	cd_yarn_folder
-	yarn install -D
+	cd_npm_folder
+	npm install
 }
 
 #### Main commands
@@ -248,37 +244,37 @@ run_graphql_server() {
         uvicorn --host 0.0.0.0 --port 8000 ${ARCHES_PROJECT}.graph.asgi:app
 }
 
-run_yarn_start() {
+run_npm_start() {
 	echo ""
 	echo ""
-	echo "----- RUNNING YARN SERVER -----"
+	echo "----- RUNNING NPM SERVER -----"
 	echo ""
 	cd_app_folder
 	sleep 10
 	cd ${ARCHES_PROJECT}
-	yarn start
+	npm start
 }
 
-run_yarn_build_production() {
+run_npm_build_production() {
 	echo ""
 	echo ""
-	echo "----- RUNNING YARN SERVER -----"
+	echo "----- RUNNING NPM BUILD PRODUCTION -----"
 	echo ""
 	cd_app_folder
 	sleep 10
 	cd ${ARCHES_PROJECT}
-	yarn build_production
+	npm run build_production
 }
 
-run_yarn_build_development() {
+run_npm_build_development() {
 	echo ""
 	echo ""
-	echo "----- RUNNING YARN SERVER -----"
+	echo "----- RUNNING NPM BUILD DEVELOPMENT -----"
 	echo ""
 	cd_app_folder
 	sleep 10
 	cd ${ARCHES_PROJECT}
-	yarn build_development
+	npm run build_development
 }
 
 
@@ -553,17 +549,17 @@ do
 			wait_for_db
 			run_migrations
 		;;
-		install_yarn_components)
-			install_yarn_components
+		install_npm_components)
+			install_npm_components
 		;;
-		run_yarn_build_development)
-			run_yarn_build_development
+		run_npm_build_development)
+			run_npm_build_development
 		;;
-		run_yarn_build_production)
-			run_yarn_build_production
+		run_npm_build_production)
+			run_npm_build_production
 		;;
-		run_yarn_start)
-			run_yarn_start
+		run_npm_start)
+			run_npm_start
 		;;
 		help|-h)
 			display_help
