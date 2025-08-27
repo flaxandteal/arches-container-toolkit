@@ -153,6 +153,7 @@ setup_arches() {
 
 wait_for_db() {
 	echo "Testing if database server is up..."
+	return_code=1
 	while [[ ! ${return_code} == 0 ]]
 	do
         psql --host=${PGHOST} --port=${PGPORT} --user=${PGUSERNAME} --dbname=postgres -c "select 1" >&/dev/null
@@ -162,10 +163,11 @@ wait_for_db() {
 	echo "Database server is up"
 
     echo "Testing if Elasticsearch is up..."
-    while [[ ! ${return_code} == 0 ]]
+    es_return_code=1
+    while [[ ! ${es_return_code} == 0 ]]
     do
-        curl -s "http://${ESHOST}:${ESPORT}/_cluster/health?wait_for_status=green&timeout=60s" >&/dev/null
-        return_code=$?
+        curl -s "http://${ESHOST}:${ESPORT}/_cluster/health?wait_for_status=yellow&timeout=60s" >&/dev/null
+        es_return_code=$?
         sleep 1
     done
     echo "Elasticsearch is up"
@@ -243,7 +245,7 @@ run_graphql_server() {
 run_npm_start() {
 	echo ""
 	echo ""
-	echo "----- RUNNING YARN SERVER -----"
+	echo "----- RUNNING NPM SERVER -----"
 	echo ""
 	cd_app_folder
 	sleep 10
@@ -254,7 +256,7 @@ run_npm_start() {
 run_npm_build_production() {
 	echo ""
 	echo ""
-	echo "----- RUNNING YARN SERVER -----"
+	echo "----- RUNNING NPM BUILD PRODUCTION -----"
 	echo ""
 	cd_app_folder
 	sleep 10
@@ -265,7 +267,7 @@ run_npm_build_production() {
 run_npm_build_development() {
 	echo ""
 	echo ""
-	echo "----- RUNNING YARN SERVER -----"
+	echo "----- RUNNING NPM BUILD DEVELOPMENT -----"
 	echo ""
 	cd_app_folder
 	sleep 10

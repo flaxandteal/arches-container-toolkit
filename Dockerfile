@@ -6,7 +6,7 @@ RUN chgrp arches ../entrypoint.sh && chmod g+rx ../entrypoint.sh
 ARG ARCHES_PROJECT
 ENV ARCHES_PROJECT $ARCHES_PROJECT
 COPY docker/entrypoint.sh ${WEB_ROOT}/
-RUN apt-get update && apt-get -y install python3-libxml2 git
+RUN apt-get update && apt-get -y install python3-libxml2 git postgresql-client
 RUN apt-get -y install build-essential python3-dev 
 RUN . ../ENV/bin/activate \
     && pip install --upgrade pip setuptools \
