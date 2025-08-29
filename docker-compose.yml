@@ -56,9 +56,10 @@ services:
         - CANTALOUPE_PORT=8182
         - COMPRESS_ENABLED=False
         - WEB_ROOT=/web_root
+        - WEBPACK_DEVELOPMENT_SERVER_PORT=9000
 
       ports:
-        - '8000:8000'
+      - '8000:8000'
       depends_on:
         - db
         - elasticsearch
