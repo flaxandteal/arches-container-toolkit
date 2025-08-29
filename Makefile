@@ -6,8 +6,10 @@ TOOLKIT_RELEASE = main
 ARCHES_PROJECT ?= $(shell ls -1 */__init__.py | head -n 1 | sed 's/\/.*//g')
 ARCHES_BASE = flaxandteal/arches_base:8.0.3
 ARCHES_PROJECT_ROOT = $(shell pwd)/
-DOCKER_COMPOSE_COMMAND = ARCHES_PROJECT_ROOT=$(ARCHES_PROJECT_ROOT) ARCHES_BASE=$(ARCHES_BASE) ARCHES_PROJECT=$(ARCHES_PROJECT) docker-compose -p $(ARCHES_PROJECT) -f docker/docker-compose.yml
+DOCKER_COMPOSE_COMMAND = ARCHES_PROJECT_ROOT=$(ARCHES_PROJECT_ROOT) ARCHES_BASE=$(ARCHES_BASE) ARCHES_PROJECT=$(ARCHES_PROJECT) docker compose -p $(ARCHES_PROJECT) -f docker/docker-compose.yml
 CMD ?=
+
+.PHONY: cypress test docker rebuild-images build create-github-action down run web npm-development docker-compose manage webpack clean help
 
 create: docker
 	echo $(shell id -u)
@@ -17,13 +19,10 @@ cypress.config.js: dl-docker
 	cp docker/tests/cypress.config.js $(ARCHES_PROJECT_ROOT)
 	cp -R docker/tests/cypress $(ARCHES_PROJECT_ROOT)
 
-.PHONY: cypress
 cypress: cypress.config.js
 
-.PHONY: test
 test: cypress
 
-.PHONY: docker
 docker: dl-docker
 
 dl-docker:
@@ -58,24 +57,21 @@ endif
 endif
 	@if [ "$$(diff Makefile $(TOOLKIT_FOLDER)/Makefile)" != "" ]; then echo "Your Makefile in this directory does not match the one in directory [$(TOOLKIT_FOLDER)], do you need to update it by copying it over this one or vice versa?"; echo; fi
 
-.PHONY: rebuild-images
 rebuild-images: docker
 	$(DOCKER_COMPOSE_COMMAND) build
 
-.PHONY: build
 build: docker
 	# We need to have certain node modules, so if the additional ones are missing, clean the folder to ensure boostrap does so.
-	if [ -z $(ARCHES_PROJECT)/media/node_modules/jquery-validation ]; then rm -rf $(ARCHES_PROJECT)/media/node_modules; fi
+	if [ -z node_modules/jquery-validation ]; then rm -rf node_modules; fi
 	$(DOCKER_COMPOSE_COMMAND) stop
-	$(DOCKER_COMPOSE_COMMAND) run --entrypoint /web_root/entrypoint.sh arches_worker install_yarn_components
+	$(DOCKER_COMPOSE_COMMAND) run --entrypoint /web_root/entrypoint.sh arches_worker install_npm_components
 	$(DOCKER_COMPOSE_COMMAND) run --entrypoint /web_root/entrypoint.sh arches_worker bootstrap
 
 	if [ -d $(ARCHES_PROJECT)/pkg ]; then $(TOOLKIT_FOLDER)/act.py . load_package --yes; fi
-	$(DOCKER_COMPOSE_COMMAND) run --entrypoint /web_root/entrypoint.sh arches_worker run_yarn_build_development
+	$(DOCKER_COMPOSE_COMMAND) run --entrypoint /web_root/entrypoint.sh arches_worker run_npm_build_development
 	$(DOCKER_COMPOSE_COMMAND) stop
 	@echo "IF THIS IS YOUR FIRST TIME RUNNING make build AND YOU HAVE NOT ALREADY, MAKE SURE TO UPDATE urls.py (see make help)"
 
-.PHONY: create-github-action
 create-github-action: cypress docker
 	mkdir -p  $(ARCHES_PROJECT_ROOT).github/workflows
 	cp $(TOOLKIT_FOLDER)/project.yml $(ARCHES_PROJECT_ROOT).github/workflows
@@ -83,41 +79,32 @@ create-github-action: cypress docker
 	sed -i "s#__ARCHESBASE__#$(ARCHES_BASE)#g" $(ARCHES_PROJECT_ROOT).github/workflows/project.yml
 	@echo "You will now need to git-add your .github folder and commit it. On your next push, you should find Arches builds."
 
-.PHONY: down
 down: docker
 	$(DOCKER_COMPOSE_COMMAND) down
 
-.PHONY: run
 run: docker
 	$(DOCKER_COMPOSE_COMMAND) up
 
-.PHONY: web
 web: docker
 	$(DOCKER_COMPOSE_COMMAND) stop arches
 	$(DOCKER_COMPOSE_COMMAND) run --service-ports arches
 
-.PHONY: yarn-development
-yarn-development: docker
-	$(DOCKER_COMPOSE_COMMAND) run --entrypoint /web_root/entrypoint.sh arches_worker run_yarn_build_development
+npm-development: docker
+	$(DOCKER_COMPOSE_COMMAND) run --entrypoint /web_root/entrypoint.sh arches_worker run_npm_build_development
 
-.PHONY: docker-compose
 docker-compose: docker
 	$(DOCKER_COMPOSE_COMMAND) $(shell echo $(CMD))
 
-.PHONY: manage
 manage: docker
 	$(DOCKER_COMPOSE_COMMAND) run --entrypoint /bin/bash arches_worker -c '. ../ENV/bin/activate; python manage.py $(CMD)'
 
-.PHONY: webpack
 webpack: docker
-	$(DOCKER_COMPOSE_COMMAND) run --entrypoint /bin/bash arches_worker -c '. ../ENV/bin/activate; cd $(ARCHES_PROJECT); DJANGO_MODE=DEV NODE_PATH=./media/node_modules NODE_OPTIONS=--max_old_space_size=8192 node --inspect ./media/node_modules/.bin/webpack --config webpack/webpack.config.dev.js'
+	$(DOCKER_COMPOSE_COMMAND) run --entrypoint /web_root/entrypoint.sh arches_worker run_npm_build_development
 
-.PHONY: clean
 clean: docker
 	@echo -n "This will remove all database and elasticsearch data, are you sure? [y/N] " && read confirmation && [ $${confirmation:-N} = y ]
 	$(DOCKER_COMPOSE_COMMAND) down -v --rmi all
 
-.PHONY: help
 help:
 	@echo
 	@echo "ARCHES F&T CONTAINER TOOLS"
