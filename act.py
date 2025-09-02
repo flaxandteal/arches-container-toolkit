@@ -30,6 +30,8 @@ class ArchesProject:
     def _get_arches_project_name(root: Path):
         project_name = None
         for submodule in root.glob("*/__init__.py"):
+            if submodule.parts[0] == "tests":
+                continue
             if project_name:
                 raise RuntimeError("There should be exactly one Python package in the project root!")
             name = str(submodule.parent.parts[-1])
