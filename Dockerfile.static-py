@@ -9,10 +9,6 @@ FROM $ARCHES_STATIC_IMAGE as arches_static
 FROM $ARCHES_DYNAMIC_IMAGE as arches
 ARG STATIC_ROOT=/static_root
 
-COPY --from=arches ${WEB_ROOT}/${ARCHES_PROJECT}/${ARCHES_PROJECT}/media/* /usr/share/nginx/html/
-COPY --from=arches ${WEB_ROOT}/${ARCHES_PROJECT}/${ARCHES_PROJECT}/media/build/js/* /usr/share/nginx/html/js/
-COPY --from=arches ${WEB_ROOT}/${ARCHES_PROJECT}/webpack/webpack-stats.json /usr/share/nginx/webpack-stats.json
-COPY --from=arches ${WEB_ROOT}/${ARCHES_PROJECT}/frontend_configuration /usr/share/nginx/frontend_configuration
 COPY --from=arches_static /usr/share/nginx/webpack-stats.json ${WEB_ROOT}/${ARCHES_PROJECT}/webpack/webpack-stats.json
 COPY --from=arches_static /usr/share/nginx/frontend_configuration ${WEB_ROOT}/${ARCHES_PROJECT}/frontend_configuration
 # RUN mkdir -p ${STATIC_ROOT}/CACHE
