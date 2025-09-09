@@ -1,7 +1,7 @@
 -- Largely copied from the AGPL-3.0 Arches project
 -- https://github.com/archesproject/arches
 
-CREATE DATABASE template_postgis WITH ENCODING 'UTF8' LC_COLLATE='C.UTF-8' LC_CTYPE='C.UTF-8';
+CREATE DATABASE template_postgis WITH ENCODING 'UTF8' LC_COLLATE='en_US.utf8' LC_CTYPE='en_US.utf8';
 UPDATE pg_database SET datistemplate='true' WHERE datname='template_postgis';
 
 \c template_postgis

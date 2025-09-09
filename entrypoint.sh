@@ -24,15 +24,15 @@ else
 	# due to https://github.com/archesproject/arches/issues/4841, changes were made to npm install
 	# and module deployment. Using the arches install directory for npm.
 	# PTW PACKAGE_JSON_FOLDER=${ARCHES_ROOT}/arches/install
-	PACKAGE_JSON_FOLDER=${WEB_ROOT}/${ARCHES_PROJECT}/${ARCHES_PROJECT}
+	PACKAGE_JSON_FOLDER=${WEB_ROOT}/${ARCHES_PROJECT}
 fi
 
-# Read modules folder - using npm now instead of yarn
-# For npm, modules are always in node_modules
-YARN_MODULES_FOLDER=${PACKAGE_JSON_FOLDER}/node_modules
+# Read modules folder from npm config file
+# Get string after '--install.modules-folder' -> get first word of the result 
+# -> remove line endlings -> trim quotes -> trim leading ./
+NPM_MODULES_FOLDER=${PACKAGE_JSON_FOLDER}/node_modules
 
 export DJANGO_PORT=${DJANGO_PORT:-8000}
-#COUCHDB_URL="http://$COUCHDB_USER:$COUCHDB_PASS@$COUCHDB_HOST:$COUCHDB_PORT"
 STATIC_ROOT=${STATIC_ROOT:-/static_root}
 
 export ALLOW_BOOTSTRAP=${ALLOW_BOOTSTRAP:-}
@@ -73,6 +73,7 @@ init_arches() {
 		echo ""
 	else
 		if [[ "${ALLOW_BOOTSTRAP}" == "True" ]]; then
+			echo "Database ${PGDBNAME} does not exists yet, starting setup..."
 			setup_arches
 		else
 			echo "Database ${PGDBNAME} does not exist yet, exiting until you 'entrypoint.sh bootstrap'..."
@@ -93,6 +94,7 @@ bootstrap() {
 
 }
 
+
 # Setup Postgresql and Elasticsearch
 setup_arches() {
 	cd_arches_root
@@ -108,10 +110,6 @@ setup_arches() {
 	echo "Running: python manage.py setup_db --force"
 	python ${APP_FOLDER}/manage.py setup_db --force
 
-    #echo "Running: Creating couchdb system databases"
-    #curl -X PUT ${COUCHDB_URL}/_users
-    #curl -X PUT ${COUCHDB_URL}/_global_changes
-    #curl -X PUT ${COUCHDB_URL}/_replicator
 
 	if [[ "${INSTALL_DEFAULT_GRAPHS}" == "True" ]]; then
 		# Import graphs
@@ -205,10 +203,10 @@ set_dev_mode() {
 }
 
 
-# NPM
+# npm
 init_npm_components() {
-	if [[ ! -d ${YARN_MODULES_FOLDER} ]] || [[ ! "$(ls ${YARN_MODULES_FOLDER})" ]]; then
-		echo "NPM modules do not exist, installing..."
+	if [[ ! -d ${NPM_MODULES_FOLDER} ]] || [[ ! "$(ls ${NPM_MODULES_FOLDER})" ]]; then
+		echo "npm modules do not exist, installing..."
 		install_npm_components
 	fi
 }
@@ -251,7 +249,7 @@ run_npm_start() {
 	echo ""
 	cd_app_folder
 	sleep 10
-	cd ${ARCHES_PROJECT}
+	# cd ${ARCHES_PROJECT}
 	npm start
 }
 
@@ -262,7 +260,7 @@ run_npm_build_production() {
 	echo ""
 	cd_app_folder
 	sleep 10
-	cd ${ARCHES_PROJECT}
+	# cd ${ARCHES_PROJECT}
 	npm run build_production
 }
 
@@ -273,7 +271,7 @@ run_npm_build_development() {
 	echo ""
 	cd_app_folder
 	sleep 10
-	cd ${ARCHES_PROJECT}
+	# cd ${ARCHES_PROJECT}
 	npm run build_development
 }
 
@@ -394,7 +392,6 @@ collect_static_real(){
 	echo ""
 	cd_app_folder
 	python manage.py collectstatic --noinput
-	python manage.py compress --verbosity=3
 }
 
 
@@ -459,6 +456,8 @@ run_gunicorn_server() {
 run_arches() {
 
 	init_arches
+
+	init_npm_components
 
 	if [[ "${DJANGO_MODE}" == "DEV" ]]; then
 		set_dev_mode

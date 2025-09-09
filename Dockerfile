@@ -16,15 +16,14 @@ RUN . ../ENV/bin/activate \
 COPY . ${WEB_ROOT}/${ARCHES_PROJECT}/
 RUN . ../ENV/bin/activate \
     && pip install cachetools websockets pika "protobuf>4.21,<5.0" \
-    && (if [ -f ${WEB_ROOT}/${ARCHES_PROJECT}/pyproject.toml ]; then pip install -e ${WEB_ROOT}/${ARCHES_PROJECT}; fi) \
-    && pip install -e ${WEB_ROOT}/arches \
-    && (if [ -f ${WEB_ROOT}/${ARCHES_PROJECT}/requirements.txt ]; then pip install -r ${WEB_ROOT}/${ARCHES_PROJECT}/requirements.txt; fi) # ensure that we have the arches from _inside_ the container
+    && (if [ -f ${WEB_ROOT}/${ARCHES_PROJECT}/requirements.txt ]; then pip install -r ${WEB_ROOT}/${ARCHES_PROJECT}/requirements.txt --no-binary :all:; fi) \
+    && (if [ -f ${WEB_ROOT}/${ARCHES_PROJECT}/pyproject.toml ]; then (cd ${WEB_ROOT}/${ARCHES_PROJECT} && pip install -e .); fi) \
+    && pip install ${WEB_ROOT}/arches
 
 RUN mkdir -p ${WEB_ROOT}/${ARCHES_PROJECT}/${ARCHES_PROJECT}/uploadedfiles && chgrp -R arches ${WEB_ROOT}/${ARCHES_PROJECT}/${ARCHES_PROJECT}/uploadedfiles && chmod -R g+rw ${WEB_ROOT}/${ARCHES_PROJECT}/${ARCHES_PROJECT}/uploadedfiles
 
 COPY docker/settings_docker.py ${WEB_ROOT}/${ARCHES_PROJECT}/${ARCHES_PROJECT}/settings_local.py
-RUN mkdir -p ${WEB_ROOT}/${ARCHES_PROJECT}/${ARCHES_PROJECT}/webpack && echo "{}" > ${WEB_ROOT}/${ARCHES_PROJECT}/${ARCHES_PROJECT}/webpack/webpack-stats.json
-RUN echo "{}" > ${WEB_ROOT}/${ARCHES_PROJECT}/webpack/webpack-stats.json
+RUN echo '{"status": "", "assets": {}, "chunks": {}, "publicPath": "/static/"}' > ${WEB_ROOT}/${ARCHES_PROJECT}/webpack/webpack-stats.json
 
 WORKDIR ${WEB_ROOT}/${ARCHES_PROJECT}/${ARCHES_PROJECT}
 RUN mkdir -p /static_root && chown -R arches /static_root
