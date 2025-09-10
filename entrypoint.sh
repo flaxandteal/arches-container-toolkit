@@ -222,6 +222,15 @@ install_npm_components() {
 	npm install
 }
 
+update_npm_components() {
+	echo ""
+	echo ""
+	echo "----- UPDATING NPM COMPONENTS -----"
+	echo ""
+	cd_npm_folder
+	npm update
+}
+
 #### Main commands
 run_arches_graphql() {
 

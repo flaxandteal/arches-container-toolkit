@@ -4,12 +4,23 @@ TOOLKIT_REPO = https://github.com/flaxandteal/arches-container-toolkit
 TOOLKIT_FOLDER = docker
 TOOLKIT_RELEASE = main
 ARCHES_PROJECT ?= $(shell ls -1 */__init__.py | head -n 1 | sed 's/\/.*//g')
+ifeq ($(wildcard /../arches),)
+	ARCHES_ROOT=$(realpath ../arches)
+else
+	
+	ARCHES_ROOT=
+endif
+ifneq ($(ARCHES_ROOT),)
+  DOCKER_COMPOSE_FILES = -f docker/docker-compose.yml -f docker/docker-compose.volumes.yml
+else
+  DOCKER_COMPOSE_FILES = -f docker/docker-compose.yml
+endif
 ARCHES_BASE = ghcr.io/flaxandteal/arches-base:docker-8.1
 ARCHES_PROJECT_ROOT = $(shell pwd)/
-DOCKER_COMPOSE_COMMAND = ARCHES_PROJECT_ROOT=$(ARCHES_PROJECT_ROOT) ARCHES_BASE=$(ARCHES_BASE) ARCHES_PROJECT=$(ARCHES_PROJECT) docker compose -p $(ARCHES_PROJECT) -f docker/docker-compose.yml
+DOCKER_COMPOSE_COMMAND = ARCHES_PROJECT_ROOT=$(ARCHES_PROJECT_ROOT) ARCHES_BASE=$(ARCHES_BASE) ARCHES_PROJECT=$(ARCHES_PROJECT) ARCHES_ROOT=$(ARCHES_ROOT) docker compose -p $(ARCHES_PROJECT) $(DOCKER_COMPOSE_FILES)
 CMD ?=
 
-.PHONY: cypress test docker rebuild-images build create-github-action down run web npm-development docker-compose manage webpack clean help
+.PHONY: cypress test docker rebuild-images build create-github-action down run web npm-development docker-compose manage webpack clean help npm-install npm-update create-apps-dir update-urls-debug
 
 create: docker
 	echo $(shell id -u)
@@ -24,6 +35,23 @@ cypress: cypress.config.js
 test: cypress
 
 docker: dl-docker
+
+create-apps-dir:
+	@if [ ! -d "../arches_apps" ]; then \
+    	mkdir -p "../arches_apps"; \
+		APPS_DIR=../arches_apps \
+    	echo "Created arches_apps directory"; \
+	else \
+    	echo "arches_apps already exists"; \
+	fi
+
+update-urls-debug:
+	@if ! grep -q "from django.contrib.staticfiles import views" $(ARCHES_PROJECT_ROOT)/$(ARCHES_PROJECT)/urls.py; then \
+    	echo "Adding DEBUG static file serving to urls.py"; \
+    	echo "\nif settings.DEBUG:\n    from django.contrib.staticfiles import views\n    from django.urls import re_path\n    urlpatterns += [\n        re_path(r'^static/(?P<path>.*)$', views.serve),\n    ]" >> $(ARCHES_PROJECT_ROOT)/$(ARCHES_PROJECT)/urls.py; \
+	else \
+    	echo "DEBUG static file serving already exists in urls.py"; \
+	fi
 
 dl-docker:
 	@echo ARCHES_PROJECT is [$(ARCHES_PROJECT)]
@@ -60,6 +88,12 @@ endif
 rebuild-images: docker
 	$(DOCKER_COMPOSE_COMMAND) build
 
+npm-install: docker
+	$(DOCKER_COMPOSE_COMMAND) run --entrypoint /web_root/entrypoint.sh arches_worker install_npm_components
+
+npm-update: docker
+	$(DOCKER_COMPOSE_COMMAND) run --entrypoint /web_root/entrypoint.sh arches_worker update_npm_components
+
 build: docker
 	# We need to have certain node modules, so if the additional ones are missing, clean the folder to ensure boostrap does so.
 	if [ -z node_modules/jquery-validation ]; then rm -rf node_modules; fi
@@ -70,7 +104,8 @@ build: docker
 	if [ -d $(ARCHES_PROJECT)/pkg ]; then $(TOOLKIT_FOLDER)/act.py . load_package --yes; fi
 	$(DOCKER_COMPOSE_COMMAND) run --entrypoint /web_root/entrypoint.sh arches_worker run_npm_build_development
 	$(DOCKER_COMPOSE_COMMAND) stop
-	@echo "IF THIS IS YOUR FIRST TIME RUNNING make build AND YOU HAVE NOT ALREADY, MAKE SURE TO UPDATE urls.py (see make help)"
+	$(MAKE) create-apps-dir
+	$(MAKE) update-urls-debug
 
 create-github-action: cypress docker
 	mkdir -p  $(ARCHES_PROJECT_ROOT).github/workflows

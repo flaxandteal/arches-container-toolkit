@@ -6,7 +6,7 @@ RUN chgrp arches ../entrypoint.sh && chmod g+rx ../entrypoint.sh
 ARG ARCHES_PROJECT
 ENV ARCHES_PROJECT $ARCHES_PROJECT
 COPY docker/entrypoint.sh ${WEB_ROOT}/
-RUN apt-get update && apt-get -y install python3-libxml2 git postgresql-client
+RUN apt-get update && apt-get -y install python3-libxml2 git
 RUN apt-get -y install build-essential python3-dev 
 RUN . ../ENV/bin/activate \
     && pip install --upgrade pip setuptools \
@@ -16,7 +16,6 @@ RUN . ../ENV/bin/activate \
 COPY . ${WEB_ROOT}/${ARCHES_PROJECT}/
 RUN . ../ENV/bin/activate \
     && pip install cachetools websockets pika "protobuf>4.21,<5.0" \
-    && (if [ -f ${WEB_ROOT}/${ARCHES_PROJECT}/requirements.txt ]; then pip install -r ${WEB_ROOT}/${ARCHES_PROJECT}/requirements.txt --no-binary :all:; fi) \
     && (if [ -f ${WEB_ROOT}/${ARCHES_PROJECT}/pyproject.toml ]; then (cd ${WEB_ROOT}/${ARCHES_PROJECT} && pip install -e .); fi) \
     && pip install ${WEB_ROOT}/arches
 
