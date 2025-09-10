@@ -20,7 +20,7 @@ ARCHES_PROJECT_ROOT = $(shell pwd)/
 DOCKER_COMPOSE_COMMAND = ARCHES_PROJECT_ROOT=$(ARCHES_PROJECT_ROOT) ARCHES_BASE=$(ARCHES_BASE) ARCHES_PROJECT=$(ARCHES_PROJECT) ARCHES_ROOT=$(ARCHES_ROOT) docker compose -p $(ARCHES_PROJECT) $(DOCKER_COMPOSE_FILES)
 CMD ?=
 
-.PHONY: cypress test docker rebuild-images build create-github-action down run web npm-development docker-compose manage webpack clean help npm-install npm-update create-apps-dir update-urls-debug
+.PHONY: cypress test docker rebuild-images build create-github-action down run web npm-development docker-compose manage webpack clean help npm-install npm-update create-apps-dir update-urls-debug install-app
 
 create: docker
 	echo $(shell id -u)
@@ -44,6 +44,16 @@ create-apps-dir:
 	else \
     	echo "arches_apps already exists"; \
 	fi
+
+install-app:
+	@if [ -z "$(URL)" ]; then \
+		echo "Error: No GitHub URL provided. Usage: make install-app URL=<repo_url>"; \
+		exit 1; \
+	fi
+	python3 $(TOOLKIT_FOLDER)/install_app.py "$(URL)" --project-root "$(ARCHES_PROJECT_ROOT)"
+	@echo ""
+	@echo "You may need to run python manage.py migrate to install any models in the app"
+	@echo "Make sure to rebuild the project frontend"
 
 update-urls-debug:
 	@if ! grep -q "from django.contrib.staticfiles import views" $(ARCHES_PROJECT_ROOT)/$(ARCHES_PROJECT)/urls.py; then \
