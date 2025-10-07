@@ -2,12 +2,13 @@ name: Build Arches project
 run-name: Build Arches project
 on: [push]
 env:
-  ARCHES_BASE: __ARCHESBASE__
-  ARCHES_PROJECT: __ARCHESPROJECT__
+  ARCHES_BASE: ghcr.io/flaxandteal/arches-base:docker-8.1
+  ARCHES_PROJECT: quartz
 jobs:
   Build-Arches:
     runs-on: [self-hosted]
     permissions:
+      contents: read
       packages: write
     outputs:
       image: ${{ steps.extract_image_name.outputs.image_name }}
@@ -70,6 +71,7 @@ jobs:
     runs-on: [self-hosted]
     needs: [Build-Arches]
     permissions:
+      contents: read
       packages: write
     outputs:
       image: ${{ steps.extract_image_name.outputs.image_name }}
@@ -149,14 +151,14 @@ jobs:
           --health-timeout 5s
           --health-retries 10
       db:
-        image: flaxandteal/arches_coral_postgres
+        image: ghcr.io/flaxandteal/arches-postgis:docker-8.1
         #volumes:
         #    - ${{ github.workspace }}/scripts/init-unix.sql:/docker-entrypoint-initdb.d/init.sql # to set up the DB template
         ports:
           - '5432:5432'
         env:
           POSTGRES_USER: postgres
-          POSTGRES_PASS: postgres
+          POSTGRES_PASSWORD: postgres
           POSTGRES_DB: postgres
           POSTGRES_MULTIPLE_EXTENSIONS: postgis,postgis_topology
           TZ: PST
@@ -211,6 +213,7 @@ jobs:
     needs: [Build-Arches-Static, Build-Arches]
     runs-on: [self-hosted]
     permissions:
+      contents: read
       packages: write
     outputs:
       image: ${{ steps.extract_image_name.outputs.image_name }}
@@ -321,14 +324,14 @@ jobs:
           --health-retries 10
 
       db:
-        image: flaxandteal/arches_coral_postgres
+        image: ghcr.io/flaxandteal/arches-postgis:docker-8.1
         #volumes:
         #    - ${{ github.workspace }}/scripts/init-unix.sql:/docker-entrypoint-initdb.d/init.sql # to set up the DB template
         ports:
           - '5432:5432'
         env:
           POSTGRES_USER: postgres
-          POSTGRES_PASS: postgres
+          POSTGRES_PASSWORD: postgres
           POSTGRES_DB: postgres
           POSTGRES_MULTIPLE_EXTENSIONS: postgis,postgis_topology
           TZ: PST
