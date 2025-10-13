@@ -1,4 +1,3 @@
-version: '3.8'
 services:
     cantaloupe:
       image: uclalibrary/cantaloupe:5.0.3-0
@@ -25,7 +24,7 @@ services:
         - ${ARCHES_PROJECT_ROOT}.:/web_root/$ARCHES_PROJECT
         - ${ARCHES_PROJECT_ROOT}./docker/entrypoint.sh:/web_root/entrypoint.sh
         - ${ARCHES_PROJECT_ROOT}./docker/settings_docker.py:/web_root/$ARCHES_PROJECT/$ARCHES_PROJECT/settings_local.py
-        - ${ARCHES_PROJECT_ROOT}/arches_apps:/web_root/arches_apps
+        - ${ARCHES_PROJECT_ROOT}./../arches_apps:/web_root/arches_apps
         # ${ARCHES_PROJECT_ROOT}./../arches-orm/arches_orm:/web_root/ENV/lib/python3.12/site-packages/arches_orm
         # ${ARCHES_PROJECT_ROOT}./../arches_doorstep/arches_doorstep:/web_root/ENV/lib/python3.12/site-packages/arches_doorstep
       environment:
@@ -111,7 +110,7 @@ services:
         - ${ARCHES_PROJECT_ROOT}.:/web_root/$ARCHES_PROJECT
         - ${ARCHES_PROJECT_ROOT}./docker/entrypoint.sh:/web_root/entrypoint.sh
         - ${ARCHES_PROJECT_ROOT}./docker/settings_docker.py:/web_root/$ARCHES_PROJECT/$ARCHES_PROJECT/settings_local.py
-        - ${ARCHES_PROJECT_ROOT}/arches_apps:/web_root/arches_apps
+        - ${ARCHES_PROJECT_ROOT}./../arches_apps:/web_root/arches_apps
         # ${ARCHES_PROJECT_ROOT}./../arches-orm/arches_orm:/web_root/ENV/lib/python3.12/site-packages/arches_orm
         # ${ARCHES_PROJECT_ROOT}./../arches_doorstep/arches_doorstep:/web_root/ENV/lib/python3.12/site-packages/arches_doorstep
         #- ${ARCHES_PROJECT_ROOT}./../.env/lib/python3.11/site-packages/graphql:/web_root/ENV/lib/python3.12/site-packages/graphql
@@ -164,7 +163,7 @@ services:
         - ${ARCHES_PROJECT_ROOT}.:/web_root/$ARCHES_PROJECT
         - ${ARCHES_PROJECT_ROOT}./docker/entrypoint.sh:/web_root/entrypoint.sh
         - ${ARCHES_PROJECT_ROOT}./docker/settings_docker.py:/web_root/$ARCHES_PROJECT/$ARCHES_PROJECT/settings_local.py
-        - ${ARCHES_PROJECT_ROOT}/arches_apps:/web_root/arches_apps
+        - ${ARCHES_PROJECT_ROOT}./../arches_apps:/web_root/arches_apps
       environment:
         - ARCHES_PROJECT=$ARCHES_PROJECT
         - INSTALL_DEFAULT_GRAPHS=False
