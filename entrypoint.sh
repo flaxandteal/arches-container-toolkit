@@ -97,6 +97,11 @@ bootstrap() {
 
 # Setup Postgresql and Elasticsearch
 setup_arches() {
+
+	if [[ "${DJANGO_MODE}" == "DEV" ]]; then
+		install_arches_apps
+	fi
+
 	cd_arches_root
 
 	echo "" && echo ""
@@ -459,7 +464,33 @@ run_gunicorn_server() {
     fi
 }
 
+install_arches_apps() {
+	echo "Installing local apps in editable mode..."
 
+	ARCHES_APPS_DIR="${WEB_ROOT}/arches_apps"
+
+	# Ensure the expected directory exists (mounted by docker-compose)
+	if [[ ! -d "${ARCHES_APPS_DIR}" ]]; then
+		echo "No arches_app directory found, mounted apps will not be installed"
+		exit 1
+	fi
+
+	# If directory exists but is empty, warn and skip installation.
+	shopt -s nullglob
+	apps=("${ARCHES_APPS_DIR}"/*)
+	shopt -u nullglob
+	if [[ ${#apps[@]} -eq 0 ]]; then
+		echo "Warning: '${ARCHES_APPS_DIR}' is empty — nothing to install."
+		return 0
+	fi
+
+	for d in "${ARCHES_APPS_DIR}"/*; do
+		if [[ -d "$d" ]]; then
+			pip install -e "$d" || true
+			echo "Installed $d"
+		fi
+	done
+}
 
 #### Main commands
 run_arches() {
@@ -470,6 +501,7 @@ run_arches() {
 
 	if [[ "${DJANGO_MODE}" == "DEV" ]]; then
 		set_dev_mode
+		install_arches_apps
 	fi
 
 	run_custom_scripts
@@ -559,6 +591,9 @@ do
 		;;
 		install_npm_components)
 			install_npm_components
+		;;
+		install_arches_apps)
+			install_arches_apps
 		;;
 		run_npm_build_development)
 			run_npm_build_development
