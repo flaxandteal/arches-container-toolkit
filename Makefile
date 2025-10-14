@@ -20,11 +20,40 @@ ARCHES_PROJECT_ROOT = $(shell pwd)/
 DOCKER_COMPOSE_COMMAND = ARCHES_PROJECT_ROOT=$(ARCHES_PROJECT_ROOT) ARCHES_BASE=$(ARCHES_BASE) ARCHES_PROJECT=$(ARCHES_PROJECT) ARCHES_ROOT=$(ARCHES_ROOT) docker compose -p $(ARCHES_PROJECT) $(DOCKER_COMPOSE_FILES)
 CMD ?=
 
-.PHONY: cypress test docker rebuild-images build create-github-action down run web npm-development docker-compose manage webpack clean help npm-install npm-update create-apps-dir update-urls-debug install-app migrate
+.PHONY: cypress test docker rebuild-images build create-github-action down run web npm-development docker-compose manage webpack clean help npm-install npm-update create-apps-dir update-urls-debug install-app migrate post-create-setup
 
 create: docker
 	echo $(shell id -u)
 	FORUSER=$(shell id -u) $(DOCKER_COMPOSE_COMMAND) run -e FORUSER=$(shell id -u) --entrypoint /bin/sh arches_base -c ". ../ENV/bin/activate; apt install -y git; pip install 'pyjwt<2.1,>=2.0.0' 'cryptography<3.4.0' --only-binary cryptography --only-binary cffi; cd /local_root; ls -ltr; id -u; arches-admin startproject $(ARCHES_PROJECT) && mv docker Makefile $(ARCHES_PROJECT); ls -ltr; echo \$${FORUSER}; groupadd -g \$${FORUSER} externaluser; useradd -u \$${FORUSER} -g \$${FORUSER} externaluser; chown -R \$${FORUSER}:\$${FORUSER} $(ARCHES_PROJECT); echo \$$?; ls -ltr $(ARCHES_PROJECT)"
+	@echo ""
+	@echo "Project created! Run 'make post-create-setup' to update GitHub Actions and pyproject.toml for compatibility."
+
+post-create-setup:
+	@echo "Updating project configuration files..."
+	@# Update GitHub Actions workflow - PostGIS image
+	@if [ -f "$(ARCHES_PROJECT_ROOT).github/workflows/main.yml" ]; then \
+		sed -i.bak 's|postgis/postgis:14-3\.4|ghcr.io/flaxandteal/arches-postgis:docker-8.1|g' $(ARCHES_PROJECT_ROOT).github/workflows/main.yml && \
+		echo "✓ Updated .github/workflows/main.yml PostGIS image: postgis/postgis:14-3.4 → ghcr.io/flaxandteal/arches-postgis:docker-8.1"; \
+	else \
+		echo "⚠ .github/workflows/main.yml not found, skipping PostGIS update..."; \
+	fi
+	@# Update GitHub Actions workflow - Arches base image
+	@if [ -f "$(ARCHES_PROJECT_ROOT).github/workflows/main.yml" ]; then \
+		sed -i.bak 's|ghcr.io/flaxandteal/arches-base:docker-8.1|$(ARCHES_BASE)|g' $(ARCHES_PROJECT_ROOT).github/workflows/main.yml && \
+		rm -f $(ARCHES_PROJECT_ROOT).github/workflows/main.yml.bak && \
+		echo "✓ Updated .github/workflows/main.yml Arches base image: $(ARCHES_BASE)"; \
+	else \
+		echo "⚠ .github/workflows/main.yml not found, skipping base image update..."; \
+	fi
+	@# Update pyproject.toml Arches version constraint
+	@if [ -f "$(ARCHES_PROJECT_ROOT)pyproject.toml" ]; then \
+		sed -i.bak 's/arches>=8\.1/arches>=8.0.0/g' $(ARCHES_PROJECT_ROOT)pyproject.toml && \
+		rm -f $(ARCHES_PROJECT_ROOT)pyproject.toml.bak && \
+		echo "✓ Updated pyproject.toml: arches>=8.1 → arches>=8.0.0"; \
+	else \
+		echo "⚠ pyproject.toml not found, skipping..."; \
+	fi
+	@echo "Post-create setup complete!"
 
 cypress.config.js: dl-docker
 	cp docker/tests/cypress.config.js $(ARCHES_PROJECT_ROOT)
@@ -176,6 +205,11 @@ help:
 	@echo "To set up a new project, ensure the ARCHES_PROJECT above is correct, then run 'make build', followed by 'make run'."
 	@echo "If you do not see a project above or it is wrong, ensure that there is exactly one subfolder of this directory with an"
 	@echo "__init__.py file."
+	@echo
+	@echo "After creating a new project with 'make create', you can run 'make post-create-setup' to update configuration files:"
+	@echo "  - Updates .github/workflows/main.yml PostGIS image: postgis/postgis:14-3.4 → ghcr.io/flaxandteal/arches-postgis:docker-8.1"
+	@echo "  - Updates .github/workflows/main.yml to use the correct base image"
+	@echo "  - Updates pyproject.toml to change arches>=8.1 to arches>=8.0.0"
 	@echo
 	@echo "Note that '$(ARCHES_PROJECT)/urls.py' must have (manually added):"
 	@echo "	if settings.DEBUG:"
