@@ -472,7 +472,7 @@ install_arches_apps() {
 	# Ensure the expected directory exists (mounted by docker-compose)
 	if [[ ! -d "${ARCHES_APPS_DIR}" ]]; then
 		echo "No arches_app directory found, mounted apps will not be installed"
-		exit 1
+		return 0
 	fi
 
 	# If directory exists but is empty, warn and skip installation.
