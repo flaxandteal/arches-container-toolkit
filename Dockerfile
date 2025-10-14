@@ -14,10 +14,15 @@ RUN . ../ENV/bin/activate \
     && pip install "lxml" starlette-context "google-auth<2.23" django-authorization casbin-django-orm-adapter \
     && pip install django-debug-toolbar django-debug-toolbar-force # only needed in debug
 COPY . ${WEB_ROOT}/${ARCHES_PROJECT}/
+ARG EDITABLE_BASE=false
 RUN . ../ENV/bin/activate \
     && pip install cachetools websockets pika "protobuf>4.21,<5.0" \
     && (if [ -f ${WEB_ROOT}/${ARCHES_PROJECT}/pyproject.toml ]; then (cd ${WEB_ROOT}/${ARCHES_PROJECT} && pip install -e .); fi) \
-    && pip install ${WEB_ROOT}/arches
+    && if [ "$EDITABLE_BASE" = "true" ]; then \
+        pip install -e ${WEB_ROOT}/arches; \
+    else \
+        pip install ${WEB_ROOT}/arches; \
+    fi
 
 RUN mkdir -p ${WEB_ROOT}/${ARCHES_PROJECT}/${ARCHES_PROJECT}/uploadedfiles && chgrp -R arches ${WEB_ROOT}/${ARCHES_PROJECT}/${ARCHES_PROJECT}/uploadedfiles && chmod -R g+rw ${WEB_ROOT}/${ARCHES_PROJECT}/${ARCHES_PROJECT}/uploadedfiles
 
