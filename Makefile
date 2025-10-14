@@ -47,9 +47,9 @@ post-create-setup:
 	fi
 	@# Update pyproject.toml Arches version constraint
 	@if [ -f "$(ARCHES_PROJECT_ROOT)pyproject.toml" ]; then \
-		sed -i.bak 's/arches>=8\.1/arches>=8.0.0/g' $(ARCHES_PROJECT_ROOT)pyproject.toml && \
+		sed -i.bak 's/arches>=8\.1\.0/arches>=8.0.0/g' $(ARCHES_PROJECT_ROOT)pyproject.toml && \
 		rm -f $(ARCHES_PROJECT_ROOT)pyproject.toml.bak && \
-		echo "✓ Updated pyproject.toml: arches>=8.1 → arches>=8.0.0"; \
+		echo "✓ Updated pyproject.toml: arches>=8.1.0 → arches>=8.0.0"; \
 	else \
 		echo "⚠ pyproject.toml not found, skipping..."; \
 	fi
