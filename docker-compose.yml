@@ -42,7 +42,7 @@ services:
         - ESHOST=elasticsearch
         - ESPORT=9200
         - CELERY_BROKER_URL=amqp://rabbitmq:rabbitmq@rabbitmq
-        - DJANGO_MODE=PROD
+        - DJANGO_MODE=DEV
         - DJANGO_DEBUG=True
         - DOMAIN_NAMES=localhost
         - PYTHONUNBUFFERED=0
