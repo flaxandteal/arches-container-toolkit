@@ -2,8 +2,8 @@ name: Build Arches project
 run-name: Build Arches project
 on: [push]
 env:
-  ARCHES_BASE: ghcr.io/flaxandteal/arches-base:docker-8.1
-  ARCHES_PROJECT: quartz
+  ARCHES_BASE: __ARCHESBASE__
+  ARCHES_PROJECT: __ARCHESPROJECT__
 jobs:
   Build-Arches:
     runs-on: [self-hosted]
