@@ -18,7 +18,7 @@ ARG EDITABLE_BASE=false
 RUN . ../ENV/bin/activate \
     && pip install cachetools websockets pika "protobuf>4.21,<5.0" \
     && (if [ -f ${WEB_ROOT}/${ARCHES_PROJECT}/pyproject.toml ]; then (cd ${WEB_ROOT}/${ARCHES_PROJECT} && pip install -e .); fi) \
-    && if [ "$EDITABLE_BASE" = "true" ]; then \
+    && if [ "$EDITABLE_BASE" = "True" ]; then \
         pip install -e ${WEB_ROOT}/arches; \
     else \
         pip install ${WEB_ROOT}/arches; \
