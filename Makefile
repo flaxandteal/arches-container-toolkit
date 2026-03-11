@@ -21,13 +21,11 @@ DOCKER_COMPOSE_COMMAND = ARCHES_PROJECT_ROOT=$(ARCHES_PROJECT_ROOT) ARCHES_BASE=
 USE_LOCAL_APPS ?= false
 CMD ?=
 
-.PHONY: cypress test docker rebuild-images build create-github-action down run web npm-development docker-compose manage webpack clean help npm-install npm-update create-apps-dir update-urls-debug install-app migrate post-create-setup
+.PHONY: cypress test docker rebuild-images build create-github-action down run web npm-development docker-compose manage webpack clean help npm-install npm-update create-apps-dir update-urls-debug install-app
 
 create: docker
 	echo $(shell id -u)
 	FORUSER=$(shell id -u) $(DOCKER_COMPOSE_COMMAND) run -e FORUSER=$(shell id -u) --entrypoint /bin/sh arches_base -c ". ../ENV/bin/activate; apt install -y git; pip install 'pyjwt<2.1,>=2.0.0' 'cryptography<3.4.0' --only-binary cryptography --only-binary cffi; cd /local_root; ls -ltr; id -u; arches-admin startproject $(ARCHES_PROJECT) && mv docker Makefile $(ARCHES_PROJECT); ls -ltr; echo \$${FORUSER}; groupadd -g \$${FORUSER} externaluser; useradd -u \$${FORUSER} -g \$${FORUSER} externaluser; chown -R \$${FORUSER}:\$${FORUSER} $(ARCHES_PROJECT); echo \$$?; ls -ltr $(ARCHES_PROJECT)"
-	@echo ""
-	@echo "Project created! Run 'make post-create-setup' to update GitHub Actions and pyproject.toml for compatibility."
 
 post-create-setup:
 	@echo "Updating project configuration files..."
@@ -77,20 +75,20 @@ create-apps-dir:
 
 install-app:
 	@if [ -z "$(URL)" ]; then \
-		echo "Error: No GitHub URL provided. Usage: make install-app URL=<repo_url>"; \
+		echo "Error: No GitHub URL provided. Usage: make install-app URL=<repo_url> [BRANCH=<branch>]"; \
 		exit 1; \
 	fi
-	python3 $(TOOLKIT_FOLDER)/install_app.py "$(URL)" --project-root "$(ARCHES_PROJECT_ROOT)"
+	python3 $(TOOLKIT_FOLDER)/install_app.py "$(URL)" $(if $(BRANCH),--branch "$(BRANCH)") --project-root "$(ARCHES_PROJECT_ROOT)"
 	@echo ""
 	@echo "You may need to run python manage.py migrate to install any models in the app"
 	@echo "Make sure to rebuild the project frontend"
 
 update-urls-debug:
 	@if ! grep -q "from django.contrib.staticfiles import views" $(ARCHES_PROJECT_ROOT)/$(ARCHES_PROJECT)/urls.py; then \
-		echo "Adding DEBUG static file serving to urls.py"; \
-		echo "\nif settings.DEBUG:\n    from django.contrib.staticfiles import views\n    from django.urls import re_path\n    urlpatterns += [\n        re_path(r'^static/(?P<path>.*)$$', views.serve),\n    ]\n" >> $(ARCHES_PROJECT_ROOT)/$(ARCHES_PROJECT)/urls.py; \
+    	echo "Adding DEBUG static file serving to urls.py"; \
+    	echo "\nif settings.DEBUG:\n    from django.contrib.staticfiles import views\n    from django.urls import re_path\n    urlpatterns += [\n        re_path(r'^static/(?P<path>.*)$', views.serve),\n    ]" >> $(ARCHES_PROJECT_ROOT)/$(ARCHES_PROJECT)/urls.py; \
 	else \
-		echo "DEBUG static file serving already exists in urls.py"; \
+    	echo "DEBUG static file serving already exists in urls.py"; \
 	fi
 
 dl-docker:
@@ -134,10 +132,6 @@ npm-install: docker
 npm-update: docker
 	$(DOCKER_COMPOSE_COMMAND) run --entrypoint /web_root/entrypoint.sh arches_worker update_npm_components
 
-install-local-apps:
-	@echo "Installing apps from mounted arches_apps directory in editable mode..."
-	$(DOCKER_COMPOSE_COMMAND) run --entrypoint /web_root/entrypoint.sh arches_worker install_arches_apps
-
 build: docker
 	# We need to have certain node modules, so if the additional ones are missing, clean the folder to ensure boostrap does so.
 	if [ -z node_modules/jquery-validation ]; then rm -rf node_modules; fi
@@ -150,10 +144,6 @@ build: docker
 	$(DOCKER_COMPOSE_COMMAND) stop
 	$(MAKE) create-apps-dir
 	$(MAKE) update-urls-debug
-
-migrate: docker
-	$(MAKE) install-local-apps
-	$(DOCKER_COMPOSE_COMMAND) run --entrypoint /bin/bash arches_worker -c '. ../ENV/bin/activate; python manage.py migrate'
 
 create-github-action: cypress docker
 	mkdir -p  $(ARCHES_PROJECT_ROOT).github/workflows
@@ -206,11 +196,6 @@ help:
 	@echo "To set up a new project, ensure the ARCHES_PROJECT above is correct, then run 'make build', followed by 'make run'."
 	@echo "If you do not see a project above or it is wrong, ensure that there is exactly one subfolder of this directory with an"
 	@echo "__init__.py file."
-	@echo
-	@echo "After creating a new project with 'make create', you can run 'make post-create-setup' to update configuration files:"
-	@echo "  - Updates .github/workflows/main.yml PostGIS image: postgis/postgis:14-3.4 → ghcr.io/flaxandteal/arches-postgis:docker-8.1"
-	@echo "  - Updates .github/workflows/main.yml to use the correct base image"
-	@echo "  - Updates pyproject.toml to change arches>=8.1 to arches>=8.0.0"
 	@echo
 	@echo "Note that '$(ARCHES_PROJECT)/urls.py' must have (manually added):"
 	@echo "	if settings.DEBUG:"
