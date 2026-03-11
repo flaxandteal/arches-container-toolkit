@@ -18,6 +18,7 @@ endif
 ARCHES_BASE = ghcr.io/flaxandteal/arches-base:docker-8.1
 ARCHES_PROJECT_ROOT = $(shell pwd)/
 DOCKER_COMPOSE_COMMAND = ARCHES_PROJECT_ROOT=$(ARCHES_PROJECT_ROOT) ARCHES_BASE=$(ARCHES_BASE) ARCHES_PROJECT=$(ARCHES_PROJECT) ARCHES_ROOT=$(ARCHES_ROOT) docker compose -p $(ARCHES_PROJECT) $(DOCKER_COMPOSE_FILES)
+USE_LOCAL_APPS ?= false
 CMD ?=
 
 .PHONY: cypress test docker rebuild-images build create-github-action down run web npm-development docker-compose manage webpack clean help npm-install npm-update create-apps-dir update-urls-debug install-app migrate post-create-setup
@@ -125,7 +126,7 @@ endif
 	@if [ "$$(diff Makefile $(TOOLKIT_FOLDER)/Makefile)" != "" ]; then echo "Your Makefile in this directory does not match the one in directory [$(TOOLKIT_FOLDER)], do you need to update it by copying it over this one or vice versa?"; echo; fi
 
 rebuild-images: docker
-	$(DOCKER_COMPOSE_COMMAND) build
+	$(DOCKER_COMPOSE_COMMAND) build --build-arg USE_LOCAL_APPS=$(USE_LOCAL_APPS)
 
 npm-install: docker
 	$(DOCKER_COMPOSE_COMMAND) run --entrypoint /web_root/entrypoint.sh arches_worker install_npm_components

@@ -486,7 +486,7 @@ install_arches_apps() {
 
 	for d in "${ARCHES_APPS_DIR}"/*; do
 		if [[ -d "$d" ]]; then
-			pip install -e "$d" || true
+			pip install --no-deps -e "$d" || pip install -e "$d" || true
 			echo "Installed $d"
 		fi
 	done

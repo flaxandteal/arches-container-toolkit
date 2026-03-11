@@ -11,12 +11,13 @@ services:
       restart: unless-stopped
       entrypoint: ["../entrypoint.sh"]
       build:
-        context: ${ARCHES_PROJECT_ROOT}.
+        context: ${ARCHES_PROJECT_ROOT}./..
         dockerfile: ${ARCHES_PROJECT_ROOT}./docker/Dockerfile
         args:
           - ARCHES_PROJECT=$ARCHES_PROJECT
           - ARCHES_BASE=$ARCHES_BASE
           - EDITABLE_BASE=True
+          - USE_LOCAL_APPS=${USE_LOCAL_APPS:-false}
       command: run_arches
       volumes:
         
@@ -97,11 +98,12 @@ services:
       restart: unless-stopped
       entrypoint: ["../entrypoint.sh"]
       build:
-        context: ${ARCHES_PROJECT_ROOT}.
+        context: ${ARCHES_PROJECT_ROOT}./..
         dockerfile: ${ARCHES_PROJECT_ROOT}./docker/Dockerfile
         args:
           - ARCHES_PROJECT=$ARCHES_PROJECT
           - ARCHES_BASE=$ARCHES_BASE
+          - USE_LOCAL_APPS=${USE_LOCAL_APPS:-false}
       command: run_api
       ports:
         - '8001:8000'
@@ -151,12 +153,13 @@ services:
       restart: unless-stopped
       entrypoint: ["../entrypoint.sh"]
       build:
-        context: ${ARCHES_PROJECT_ROOT}.
+        context: ${ARCHES_PROJECT_ROOT}./..
         dockerfile: ${ARCHES_PROJECT_ROOT}./docker/Dockerfile
         args:
           - ARCHES_PROJECT=$ARCHES_PROJECT
           - ARCHES_BASE=$ARCHES_BASE
           - EDITABLE_BASE=True
+          - USE_LOCAL_APPS=${USE_LOCAL_APPS:-false}
       command: run_celery
       user: root
       volumes:

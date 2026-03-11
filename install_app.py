@@ -39,14 +39,15 @@ def create_apps_dir(apps_dir):
         print(f"{apps_dir} already exists")
 
 
-def clone_repository(url, target_dir):
+def clone_repository(url, target_dir, branch=None):
     """Clone the repository to the target directory."""
     if os.path.exists(target_dir):
         print(f"Repository already exists at {target_dir}, exiting...")
         sys.exit(0)
-        
-    print(f"Cloning repository into {target_dir}")
-    run_command(f"git clone {url} {target_dir}")
+
+    branch_flag = f" --branch {branch}" if branch else ""
+    print(f"Cloning repository into {target_dir}" + (f" (branch: {branch})" if branch else ""))
+    run_command(f"git clone{branch_flag} {url} {target_dir}")
     print(f"Cloned repository into {target_dir}")
 
 
@@ -348,6 +349,7 @@ def update_urls_py(urls_path, package_name):
 def main():
     parser = argparse.ArgumentParser(description='Install an Arches app from a GitHub repository')
     parser.add_argument('url', help='GitHub repository URL')
+    parser.add_argument('--branch', '-b', default=None, help='Git branch to clone')
     parser.add_argument('--project-root', default='.', help='Project root directory')
     
     args = parser.parse_args()
@@ -375,7 +377,7 @@ def main():
     create_apps_dir(apps_dir)
     
     # Clone repository
-    clone_repository(args.url, repo_dir)
+    clone_repository(args.url, repo_dir, args.branch)
     
     # Parse pyproject.toml
     package_name, optional_deps_keys = parse_pyproject_toml(repo_dir)

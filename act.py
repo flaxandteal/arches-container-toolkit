@@ -96,7 +96,7 @@ class ArchesProject:
             "make", "docker-compose",
             "CMD=\"run --entrypoint /bin/sh "
             "arches_worker -c "
-            f"\\\". ../ENV/bin/activate; python manage.py {manage_command}\\\"\""
+            f"\\\". ../ENV/bin/activate; ../entrypoint.sh install_arches_apps; python manage.py {manage_command}\\\"\""
         ])
 
 
