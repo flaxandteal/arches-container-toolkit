@@ -1,4 +1,4 @@
-ARG ARCHES_BASE=ghcr.io/flaxandteal/arches-base:docker-8.1
+ARG ARCHES_BASE=ghcr.io/flaxandteal/arches-base:docker-8.1.0-release
 FROM $ARCHES_BASE
 
 RUN useradd arches
