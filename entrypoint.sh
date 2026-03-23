@@ -501,7 +501,9 @@ run_arches() {
 
 	if [[ "${DJANGO_MODE}" == "DEV" ]]; then
 		set_dev_mode
-		install_arches_apps
+		if [[ "${USE_LOCAL_APPS}" == "true" ]]; then
+			install_arches_apps
+		fi
 	fi
 
 	run_custom_scripts
