@@ -98,10 +98,6 @@ bootstrap() {
 # Setup Postgresql and Elasticsearch
 setup_arches() {
 
-	if [[ "${DJANGO_MODE}" == "DEV" ]]; then
-		install_arches_apps
-	fi
-
 	cd_arches_root
 
 	echo "" && echo ""
@@ -157,25 +153,25 @@ setup_arches() {
 }
 
 wait_for_db() {
-	echo "Testing if database server is up..."
-	return_code=1
-	while [[ ! ${return_code} == 0 ]]
-	do
-        psql --host=${PGHOST} --port=${PGPORT} --user=${PGUSERNAME} --dbname=postgres -c "select 1" >&/dev/null
-		return_code=$?
-		sleep 1
-	done
-	echo "Database server is up"
+	echo "Waiting for database and Elasticsearch..."
 
-    echo "Testing if Elasticsearch is up..."
-    es_return_code=1
-    while [[ ! ${es_return_code} == 0 ]]
-    do
-        curl -s "http://${ESHOST}:${ESPORT}/_cluster/health?wait_for_status=yellow&timeout=60s" >&/dev/null
-        es_return_code=$?
-        sleep 1
-    done
-    echo "Elasticsearch is up"
+	# Poll both services in parallel
+	(
+		while ! psql --host=${PGHOST} --port=${PGPORT} --user=${PGUSERNAME} --dbname=postgres -c "select 1" &>/dev/null; do
+			sleep 1
+		done
+		echo "Database server is up"
+	) &
+
+	(
+		while ! curl -sf "http://${ESHOST}:${ESPORT}/_cluster/health?wait_for_status=yellow&timeout=60s" &>/dev/null; do
+			sleep 1
+		done
+		echo "Elasticsearch is up"
+	) &
+
+	wait
+	echo "All services are ready"
 }
 
 db_exists() {
@@ -262,8 +258,6 @@ run_npm_start() {
 	echo "----- RUNNING NPM SERVER -----"
 	echo ""
 	cd_app_folder
-	sleep 10
-	# cd ${ARCHES_PROJECT}
 	npm start
 }
 
@@ -273,8 +267,6 @@ run_npm_build_production() {
 	echo "----- RUNNING NPM BUILD PRODUCTION -----"
 	echo ""
 	cd_app_folder
-	sleep 10
-	# cd ${ARCHES_PROJECT}
 	npm run build_production
 }
 
@@ -284,8 +276,6 @@ run_npm_build_development() {
 	echo "----- RUNNING NPM BUILD DEVELOPMENT -----"
 	echo ""
 	cd_app_folder
-	sleep 10
-	# cd ${ARCHES_PROJECT}
 	npm run build_development
 }
 
@@ -500,7 +490,6 @@ run_arches() {
 	init_npm_components
 
 	if [[ "${DJANGO_MODE}" == "DEV" ]]; then
-		set_dev_mode
 		if [[ "${USE_LOCAL_APPS}" == "true" ]]; then
 			install_arches_apps
 		fi
@@ -525,7 +514,7 @@ run_tests() {
 	echo "----- RUNNING ARCHES TESTS -----"
 	echo ""
 	cd_arches_root
-	python manage.py test tests --pattern="*.py" --settings="tests.test_settings" --exe
+	python manage.py test tests --pattern="*.py" --settings="quartz.test_settings" --exe
 	if [ $? -ne 0 ]; then
         echo "Error: Not all tests ran succesfully."
 		echo "Exiting..."

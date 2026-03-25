@@ -6,22 +6,26 @@ RUN chgrp arches ../entrypoint.sh && chmod g+rx ../entrypoint.sh
 ARG ARCHES_PROJECT
 ENV ARCHES_PROJECT $ARCHES_PROJECT
 COPY ${ARCHES_PROJECT}/docker/entrypoint.sh ${WEB_ROOT}/
-RUN apt-get update && apt-get -y install python3-libxml2 git
-RUN apt-get -y install build-essential python3-dev
+RUN apt-get update && apt-get -y install --no-install-recommends \
+    python3-libxml2 git build-essential python3-dev \
+    && rm -rf /var/lib/apt/lists/*
 RUN . ../ENV/bin/activate \
     && pip install --upgrade pip setuptools \
-    && pip install starlette-graphene3 \
-    && pip install "lxml" starlette-context "google-auth<2.23" django-authorization casbin-django-orm-adapter \
-    && pip install django-debug-toolbar django-debug-toolbar-force # only needed in debug
+    && pip install starlette-graphene3 "lxml" starlette-context "google-auth<2.23" \
+       django-authorization casbin-django-orm-adapter \
+       django-debug-toolbar django-debug-toolbar-force
 COPY ${ARCHES_PROJECT}/ ${WEB_ROOT}/${ARCHES_PROJECT}/
 ARG EDITABLE_BASE=false
 RUN . ../ENV/bin/activate \
     && pip install cachetools websockets pika "protobuf>4.21,<5.0" \
-    && (if [ -f ${WEB_ROOT}/${ARCHES_PROJECT}/pyproject.toml ]; then (cd ${WEB_ROOT}/${ARCHES_PROJECT} && pip install -e .); fi) \
     && if [ "$EDITABLE_BASE" = "True" ]; then \
         pip install -e ${WEB_ROOT}/arches; \
     else \
         pip install ${WEB_ROOT}/arches; \
+    fi \
+    && (if [ -f ${WEB_ROOT}/${ARCHES_PROJECT}/pyproject.toml ]; then (cd ${WEB_ROOT}/${ARCHES_PROJECT} && pip install -e .); fi) \
+    && if [ "$EDITABLE_BASE" = "True" ]; then \
+        pip install -e ${WEB_ROOT}/arches; \
     fi
 
 ARG USE_LOCAL_APPS=false
