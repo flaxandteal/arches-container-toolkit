@@ -44,6 +44,7 @@ RUN echo '{"status": "", "assets": {}, "chunks": {}, "publicPath": "/static/"}' 
 
 WORKDIR ${WEB_ROOT}/${ARCHES_PROJECT}/${ARCHES_PROJECT}
 RUN mkdir -p /static_root && chown -R arches /static_root
+RUN mkdir -p ${WEB_ROOT}/${ARCHES_PROJECT}/frontend_configuration && chown -R arches ${WEB_ROOT}/${ARCHES_PROJECT}/frontend_configuration
 WORKDIR ${WEB_ROOT}/${ARCHES_PROJECT}
 RUN ../entrypoint.sh install_npm_components
 RUN if [ "$USE_LOCAL_APPS" = "true" ]; then \
