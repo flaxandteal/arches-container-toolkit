@@ -52,4 +52,4 @@ RUN if [ "$USE_LOCAL_APPS" = "true" ]; then \
     fi
 ENTRYPOINT ../entrypoint.sh
 CMD run_arches
-USER 1000
+USER arches
