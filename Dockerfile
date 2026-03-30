@@ -7,7 +7,7 @@ ARG ARCHES_PROJECT
 ENV ARCHES_PROJECT $ARCHES_PROJECT
 COPY ${ARCHES_PROJECT}/docker/entrypoint.sh ${WEB_ROOT}/
 RUN apt-get update && apt-get -y install --no-install-recommends \
-    python3-libxml2 git build-essential python3-dev \
+    python3-libxml2 git build-essential python3-dev xmlsec1 \
     && rm -rf /var/lib/apt/lists/*
 RUN . ../ENV/bin/activate \
     && pip install --upgrade pip setuptools \
