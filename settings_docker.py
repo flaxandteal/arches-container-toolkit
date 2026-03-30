@@ -59,3 +59,15 @@ CASBIN_RELOAD_QUEUE = os.getenv("CASBIN_RELOAD_QUEUE", "reloadQueue")
 for host in ELASTICSEARCH_HOSTS:
     host["scheme"] = "http"
     host["port"] = int(host["port"])
+
+LOGGING["loggers"]["django_saml2_auth"] = {
+    "handlers": ["console"],
+    "level": "DEBUG",
+    "propagate": True,
+}
+
+import logging
+
+logging.getLogger(__name__).warning(
+    "SAML2_METADATA_URL = %s", os.getenv("SAML2_METADATA_URL", "NOT SET")
+)

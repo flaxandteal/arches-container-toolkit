@@ -514,7 +514,7 @@ run_tests() {
 	echo "----- RUNNING ARCHES TESTS -----"
 	echo ""
 	cd_arches_root
-	python manage.py test tests --pattern="*.py" --settings="quartz.test_settings" --exe
+	PYTHONPATH=. python manage.py test tests --pattern="*.py" --settings="quartz.test.test_settings" --exe
 	if [ $? -ne 0 ]; then
         echo "Error: Not all tests ran succesfully."
 		echo "Exiting..."
