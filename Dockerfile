@@ -1,11 +1,10 @@
 ARG ARCHES_BASE=ghcr.io/flaxandteal/arches-base:docker-8.1.0-release
 FROM $ARCHES_BASE
 
-RUN useradd arches
-RUN chgrp arches ../entrypoint.sh && chmod g+rx ../entrypoint.sh
 ARG ARCHES_PROJECT
 ENV ARCHES_PROJECT $ARCHES_PROJECT
 COPY ${ARCHES_PROJECT}/docker/entrypoint.sh ${WEB_ROOT}/
+RUN chgrp 1000 ../entrypoint.sh && chmod g+rx ../entrypoint.sh
 RUN apt-get update && apt-get -y install --no-install-recommends \
     python3-libxml2 git build-essential python3-dev xmlsec1 \
     && rm -rf /var/lib/apt/lists/*
@@ -37,19 +36,19 @@ RUN if [ "$USE_LOCAL_APPS" = "true" ]; then \
         done; \
     fi
 
-RUN mkdir -p ${WEB_ROOT}/${ARCHES_PROJECT}/${ARCHES_PROJECT}/uploadedfiles && chgrp -R arches ${WEB_ROOT}/${ARCHES_PROJECT}/${ARCHES_PROJECT}/uploadedfiles && chmod -R g+rw ${WEB_ROOT}/${ARCHES_PROJECT}/${ARCHES_PROJECT}/uploadedfiles
+RUN mkdir -p ${WEB_ROOT}/${ARCHES_PROJECT}/${ARCHES_PROJECT}/uploadedfiles && chgrp -R 1000 ${WEB_ROOT}/${ARCHES_PROJECT}/${ARCHES_PROJECT}/uploadedfiles && chmod -R g+rw ${WEB_ROOT}/${ARCHES_PROJECT}/${ARCHES_PROJECT}/uploadedfiles
 
 COPY ${ARCHES_PROJECT}/docker/settings_docker.py ${WEB_ROOT}/${ARCHES_PROJECT}/${ARCHES_PROJECT}/settings_local.py
 RUN echo '{"status": "", "assets": {}, "chunks": {}, "publicPath": "/static/"}' > ${WEB_ROOT}/${ARCHES_PROJECT}/webpack/webpack-stats.json
 
 WORKDIR ${WEB_ROOT}/${ARCHES_PROJECT}/${ARCHES_PROJECT}
-RUN mkdir -p /static_root && chown -R arches /static_root
-RUN mkdir -p ${WEB_ROOT}/${ARCHES_PROJECT}/frontend_configuration && chown -R arches ${WEB_ROOT}/${ARCHES_PROJECT}/frontend_configuration
+RUN mkdir -p /static_root && chown -R 1000 /static_root
+RUN mkdir -p ${WEB_ROOT}/${ARCHES_PROJECT}/frontend_configuration && chown -R 1000 ${WEB_ROOT}/${ARCHES_PROJECT}/frontend_configuration
 WORKDIR ${WEB_ROOT}/${ARCHES_PROJECT}
 RUN ../entrypoint.sh install_npm_components
 RUN if [ "$USE_LOCAL_APPS" = "true" ]; then \
         ../entrypoint.sh run_npm_build_development; \
     fi
-ENTRYPOINT ../entrypoint.sh
-CMD run_arches
-USER arches
+ENTRYPOINT ["../entrypoint.sh"]
+CMD ["run_arches"]
+USER 1000
