@@ -16,7 +16,7 @@ services:
         args:
           - ARCHES_PROJECT=$ARCHES_PROJECT
           - ARCHES_BASE=$ARCHES_BASE
-          - EDITABLE_BASE=True
+          - EDITABLE_BASE=False
           - USE_LOCAL_APPS=${USE_LOCAL_APPS:-false}
       command: run_arches
       volumes:
@@ -168,7 +168,7 @@ services:
         args:
           - ARCHES_PROJECT=$ARCHES_PROJECT
           - ARCHES_BASE=$ARCHES_BASE
-          - EDITABLE_BASE=True
+          - EDITABLE_BASE=False
           - USE_LOCAL_APPS=${USE_LOCAL_APPS:-false}
       command: run_celery
       user: root
