@@ -282,7 +282,9 @@ services:
       environment:
         - RABBITMQ_DEFAULT_USER=rabbitmq
         - RABBITMQ_DEFAULT_PASS=rabbitmq
-
+        - RABBITMQ_SERVER_ADDITIONAL_ERL_ARGS=-rabbitmq deprecated_features.permit.transient_nonexcl_queues true
+      volumes:
+        - ./rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf
 volumes:
     arches-log:
     arches-static:
