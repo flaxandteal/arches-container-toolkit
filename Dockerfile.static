@@ -72,6 +72,7 @@ COPY ./${ARCHES_PROJECT}/settings.py ${WEB_ROOT}/${ARCHES_PROJECT}/${ARCHES_PROJ
 #RUN echo $WEB_ROOT "|" $ARCHES_PROJECT && rm -f ${WEB_ROOT}/${ARCHES_PROJECT}/.frontend-configuration-settings.json && /bin/bash -c ". ../ENV/bin/activate; python manage.py check" && cat ${WEB_ROOT}/${ARCHES_PROJECT}/.frontend-configuration-settings.json
 RUN echo $WEB_ROOT "|" $ARCHES_PROJECT && /bin/bash -c ". ../ENV/bin/activate; python manage.py shell"
 RUN echo $WEB_ROOT "|" $ARCHES_PROJECT && ${WEB_ROOT}/entrypoint.sh run_npm_build_${ARCHES_ENVIRONMENT}
+RUN /bin/bash -c ". ../ENV/bin/activate; python manage.py collectstatic --noinput"
 
 FROM nginxinc/nginx-unprivileged:1.21.5-alpine
 ARG WEB_ROOT=/web_root
