@@ -230,7 +230,7 @@ services:
         - "ES_JAVA_OPTS=-Xms400m -Xmx400m"
 
     rabbitmq:
-      image: rabbitmq
+      image: rabbitmq:3-management
       environment:
         - RABBITMQ_DEFAULT_USER=rabbitmq
         - RABBITMQ_DEFAULT_PASS=rabbitmq

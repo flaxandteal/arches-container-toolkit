@@ -171,7 +171,7 @@ wait_for_db() {
     es_return_code=1
     while [[ ! ${es_return_code} == 0 ]]
     do
-        curl -s "http://${ESHOST}:${ESPORT}/_cluster/health?wait_for_status=yellow&timeout=60s" >&/dev/null
+        curl -sf "http://${ESHOST}:${ESPORT}/_cluster/health?wait_for_status=yellow&timeout=60s" >&/dev/null
         es_return_code=$?
         sleep 1
     done
