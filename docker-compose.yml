@@ -1,4 +1,3 @@
-version: '3.8'
 services:
     cantaloupe:
       image: uclalibrary/cantaloupe:5.0.3-0
@@ -8,6 +7,7 @@ services:
         - 8182:8182
 
     arches:
+      user: root
       restart: unless-stopped
       entrypoint: ["../entrypoint.sh"]
       build:
@@ -16,17 +16,21 @@ services:
         args:
           - ARCHES_PROJECT=$ARCHES_PROJECT
           - ARCHES_BASE=$ARCHES_BASE
+          - EDITABLE_BASE=False
+          - USE_LOCAL_APPS=${USE_LOCAL_APPS:-false}
       command: run_arches
       volumes:
+
         - arches-log:/arches/arches/logs
         - arches-static:/static_root
-        # - $ARCHES_ROOT:/web_root/arches
-        # $ARCHES_ROOT/docker/gunicorn_config.py:/web_root/arches/gunicorn_config.py
-        # ./$ARCHES_PROJECT/media/node_modules/arches/docker/gunicorn_config.py:/web_root/arches/arches/gunicorn_config.py
         - ${ARCHES_PROJECT_ROOT}.:/web_root/$ARCHES_PROJECT
+        - node-modules:/web_root/$ARCHES_PROJECT/node_modules
         - ${ARCHES_PROJECT_ROOT}./docker/entrypoint.sh:/web_root/entrypoint.sh
         - ${ARCHES_PROJECT_ROOT}./docker/settings_docker.py:/web_root/$ARCHES_PROJECT/$ARCHES_PROJECT/settings_local.py
-        # - ${ARCHES_PROJECT_ROOT}./../arches-orm/arches_orm:/web_root/ENV/lib/python3.10/site-packages/arches_orm
+        - ${ARCHES_PROJECT_ROOT}./../arches:/web_root/arches
+        - ${ARCHES_PROJECT_ROOT}./../arches_apps:/web_root/arches_apps
+        # ${ARCHES_PROJECT_ROOT}./../arches-orm/arches_orm:/web_root/ENV/lib/python3.12/site-packages/arches_orm
+        # ${ARCHES_PROJECT_ROOT}./../arches_doorstep/arches_doorstep:/web_root/ENV/lib/python3.12/site-packages/arches_doorstep
       environment:
         - ARCHES_PROJECT=$ARCHES_PROJECT
         - INSTALL_DEFAULT_GRAPHS=False
@@ -41,8 +45,9 @@ services:
         - ESHOST=elasticsearch
         - ESPORT=9200
         - CELERY_BROKER_URL=amqp://rabbitmq:rabbitmq@rabbitmq
-        - DJANGO_MODE=PROD
+        - DJANGO_MODE=DEV
         - DJANGO_DEBUG=True
+        - DJANGO_INSECURE_COOKIES=True
         - DOMAIN_NAMES=localhost
         - PYTHONUNBUFFERED=0
         - TZ=PST
@@ -56,13 +61,18 @@ services:
         - CANTALOUPE_PORT=8182
         - COMPRESS_ENABLED=False
         - WEB_ROOT=/web_root
+        - WEBPACK_DEVELOPMENT_SERVER_PORT=9000
+        - USE_LOCAL_APPS=${USE_LOCAL_APPS:-false}
 
       ports:
-        - '8000:8000'
+      - '8000:8000'
       depends_on:
-        - db
-        - elasticsearch
-        - cantaloupe
+        db:
+          condition: service_healthy
+        elasticsearch:
+          condition: service_healthy
+        cantaloupe:
+          condition: service_started
 
     arches_base:
       profiles: ["base"]
@@ -100,21 +110,24 @@ services:
         args:
           - ARCHES_PROJECT=$ARCHES_PROJECT
           - ARCHES_BASE=$ARCHES_BASE
+          - USE_LOCAL_APPS=${USE_LOCAL_APPS:-false}
       command: run_api
       ports:
         - '8001:8000'
       volumes:
         - arches-log:/arches/arches/logs
         - arches-static:/static_root
-        # - $ARCHES_ROOT:/web_root/arches
-        # $ARCHES_ROOT/docker/gunicorn_config.py:/web_root/arches/gunicorn_config.py
-        # ./$ARCHES_PROJECT/media/node_modules/arches/docker/gunicorn_config.py:/web_root/arches/arches/gunicorn_config.py
         - ${ARCHES_PROJECT_ROOT}.:/web_root/$ARCHES_PROJECT
+        - node-modules:/web_root/$ARCHES_PROJECT/node_modules
         - ${ARCHES_PROJECT_ROOT}./docker/entrypoint.sh:/web_root/entrypoint.sh
         - ${ARCHES_PROJECT_ROOT}./docker/settings_docker.py:/web_root/$ARCHES_PROJECT/$ARCHES_PROJECT/settings_local.py
-        # - ${ARCHES_PROJECT_ROOT}./../arches-orm/arches_orm:/web_root/ENV/lib/python3.10/site-packages/arches_orm
+        - ${ARCHES_PROJECT_ROOT}./../arches_apps:/web_root/arches_apps
+        # ${ARCHES_PROJECT_ROOT}./../arches-orm/arches_orm:/web_root/ENV/lib/python3.12/site-packages/arches_orm
+        # ${ARCHES_PROJECT_ROOT}./../arches_doorstep/arches_doorstep:/web_root/ENV/lib/python3.12/site-packages/arches_doorstep
+        #- ${ARCHES_PROJECT_ROOT}./../.env/lib/python3.11/site-packages/graphql:/web_root/ENV/lib/python3.12/site-packages/graphql
       environment:
         - ARCHES_PROJECT=$ARCHES_PROJECT
+        - GUNICORN_WORKERS=1
         - INSTALL_DEFAULT_GRAPHS=False
         - INSTALL_DEFAULT_CONCEPTS=False
         - GUNICORN_WORKER_TIMEOUT=300
@@ -127,6 +140,8 @@ services:
         - ESPORT=9200
         - DJANGO_MODE=DEV
         - DJANGO_DEBUG=True
+        - DJANGO_INSECURE_COOKIES=True
+        - DEBUG=True
         # - DJANGO_REMOTE_DEBUG=False
         - DOMAIN_NAMES=localhost
         - PYTHONUNBUFFERED=0
@@ -136,11 +151,16 @@ services:
         - CANTALOUPE_HOST=cantaloupe
         - CANTALOUPE_PORT=8182
         - TZ=PST
+        - USE_LOCAL_APPS=${USE_LOCAL_APPS:-false}
       depends_on:
-        - db
-        - elasticsearch
-        - rabbitmq
-        - cantaloupe
+        db:
+          condition: service_healthy
+        elasticsearch:
+          condition: service_healthy
+        rabbitmq:
+          condition: service_started
+        cantaloupe:
+          condition: service_started
 
     arches_worker:
       image: arches_${ARCHES_PROJECT}:latest
@@ -152,18 +172,19 @@ services:
         args:
           - ARCHES_PROJECT=$ARCHES_PROJECT
           - ARCHES_BASE=$ARCHES_BASE
+          - EDITABLE_BASE=False
+          - USE_LOCAL_APPS=${USE_LOCAL_APPS:-false}
       command: run_celery
       user: root
       volumes:
         - arches-log:/arches/arches/logs
         - arches-static:/static_root
-        # - $ARCHES_ROOT:/web_root/arches
-        # $ARCHES_ROOT/docker/gunicorn_config.py:/web_root/arches/gunicorn_config.py
-        # ./$ARCHES_PROJECT/media/node_modules/arches/docker/gunicorn_config.py:/web_root/arches/arches/gunicorn_config.py
         - ${ARCHES_PROJECT_ROOT}.:/web_root/$ARCHES_PROJECT
+        - node-modules:/web_root/$ARCHES_PROJECT/node_modules
         - ${ARCHES_PROJECT_ROOT}./docker/entrypoint.sh:/web_root/entrypoint.sh
         - ${ARCHES_PROJECT_ROOT}./docker/settings_docker.py:/web_root/$ARCHES_PROJECT/$ARCHES_PROJECT/settings_local.py
-        # - ${ARCHES_PROJECT_ROOT}./../arches-orm/arches_orm:/web_root/ENV/lib/python3.10/site-packages/arches_orm
+        - ${ARCHES_PROJECT_ROOT}./../arches:/web_root/arches
+        - ${ARCHES_PROJECT_ROOT}./../arches_apps:/web_root/arches_apps
       environment:
         - ARCHES_PROJECT=$ARCHES_PROJECT
         - INSTALL_DEFAULT_GRAPHS=False
@@ -177,6 +198,7 @@ services:
         - ESPORT=9200
         - DJANGO_MODE=DEV
         - DJANGO_DEBUG=True
+        - DJANGO_INSECURE_COOKIES=True
         - CASBIN_RELOAD_QUEUE=True
         - CASBIN_LISTEN=True
         # - DJANGO_REMOTE_DEBUG=False
@@ -188,19 +210,25 @@ services:
         - CANTALOUPE_HOST=cantaloupe
         - CANTALOUPE_PORT=8182
         - TZ=PST
+        - USE_LOCAL_APPS=${USE_LOCAL_APPS:-false}
       depends_on:
-        - db
-        - elasticsearch
-        - rabbitmq
-        - arches
-        - cantaloupe
+        db:
+          condition: service_healthy
+        elasticsearch:
+          condition: service_healthy
+        rabbitmq:
+          condition: service_started
+        arches:
+          condition: service_started
+        cantaloupe:
+          condition: service_started
 
     db:
       # NOTE: due to a race condition, this needs docker-compose run db first to ensure
       # template directory created
-      image: kartoza/postgis:12.0
+      image: ghcr.io/flaxandteal/arches-postgis:docker-8.1
       volumes:
-          - postgres-data:/var/lib/postgresql
+          - postgres-data:/var/lib/postgresql/data
           - postgres-log:/var/log/postgresql
           - ${ARCHES_PROJECT_ROOT}./docker/init-unix.sql:/docker-entrypoint-initdb.d/init.sql # to set up the DB template
       ports:
@@ -209,34 +237,60 @@ services:
         - '5432'
       environment:
         - POSTGRES_USER=postgres
-        - POSTGRES_PASS=postgres
-        - POSTGRESQL_USER=postgres
-        - POSTGRESQL_PASS=postgres
+        - POSTGRES_PASSWORD=postgres
         - POSTGRES_DB=postgres
-        - POSTGRES_MULTIPLE_EXTENSIONS=postgis,postgis_topology
-        - SHARED_PRELOAD_LIBRARIES=pg_stat_statements
         - TZ=PST
+      command: >
+        postgres
+          -c shared_buffers=256MB
+          -c fsync=off
+          -c synchronous_commit=off
+          -c full_page_writes=off
+      healthcheck:
+        test: ["CMD-SHELL", "pg_isready -U postgres"]
+        interval: 5s
+        timeout: 5s
+        retries: 10
 
     elasticsearch:
-      image: elasticsearch:8.4.0
+      image: elasticsearch:9.0.4
       volumes:
         - elasticsearch-data:/usr/share/elasticsearch/data
       ports:
         - "9200:9200"
         - "9300:9300"
+      ulimits:
+        memlock:
+          soft: -1
+          hard: -1
       environment:
         - TZ=PST
         - discovery.type=single-node
         - discovery.seed_hosts=[]
         - xpack.security.enabled=false
-        - "ES_JAVA_OPTS=-Xms400m -Xmx400m"
+        - xpack.ml.enabled=false
+        - xpack.watcher.enabled=false
+        - xpack.monitoring.collection.enabled=false
+        - bootstrap.memory_lock=true
+        - cluster.routing.allocation.disk.threshold_enabled=false
+        - action.auto_create_index=true
+        - indices.recovery.max_bytes_per_sec=200mb
+        - "ES_JAVA_OPTS=-Xms2g -Xmx2g -XX:+UseG1GC -XX:InitiatingHeapOccupancyPercent=75"
+      healthcheck:
+        test: ["CMD-SHELL", "curl -sf http://localhost:9200/_cluster/health?wait_for_status=yellow || exit 1"]
+        interval: 10s
+        timeout: 10s
+        retries: 20
+        start_period: 30s
 
     rabbitmq:
       image: rabbitmq
       environment:
         - RABBITMQ_DEFAULT_USER=rabbitmq
         - RABBITMQ_DEFAULT_PASS=rabbitmq
-
+        - RABBITMQ_SERVER_ADDITIONAL_ERL_ARGS=-rabbitmq deprecated_features.permit.transient_nonexcl_queues true
+      volumes:
+        - ./rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf
 volumes:
     arches-log:
     arches-static:
@@ -244,3 +298,4 @@ volumes:
     postgres-data:
     elasticsearch-data:
     cantaloupe-data:
+    node-modules:

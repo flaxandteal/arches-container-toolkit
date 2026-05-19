@@ -1,6 +1,6 @@
 ARG VERSION
 ARG ARCHES_PROJECT=scarlet
-ARG ARCHES_BASE=flaxandteal/arches_base
+ARG ARCHES_BASE=ghcr.io/flaxandteal/arches-base:docker-8.1.0-release
 ARG ARCHES_DYNAMIC_IMAGE=flaxandteal_${ARCHES_PROJECT}:$VERSION
 ARG WEB_ROOT=/web_root
 ARG ARCHES_ENVIRONMENT=production
@@ -51,25 +51,27 @@ ENV DJANGO_DEBUG=False \
     DJANGO_SETTINGS_MODULE=${ARCHES_PROJECT}.settings
 WORKDIR ${WEB_ROOT}/${ARCHES_PROJECT}
 
-RUN ${WEB_ROOT}/entrypoint.sh init_yarn_components
+RUN ${WEB_ROOT}/entrypoint.sh init_npm_components
 
 # FIXME: To be replaced once per-project settings working
 RUN (echo "\nSTATIC_ROOT='${STATIC_ROOT}'" >> ${WEB_ROOT}/${ARCHES_PROJECT}/${ARCHES_PROJECT}/settings_local.py) && echo $STATIC_ROOT 
 RUN (echo "\nARCHES_NAMESPACE_FOR_DATA_EXPORT='${ARCHES_NAMESPACE_FOR_DATA_EXPORT}'" >> ${WEB_ROOT}/${ARCHES_PROJECT}/${ARCHES_PROJECT}/settings_local.py) && echo $STATIC_ROOT
 RUN (echo "\nPUBLIC_SERVER_ADDRESS='${PUBLIC_SERVER_ADDRESS}' or ARCHES_NAMESPACE_FOR_DATA_EXPORT" >> ${WEB_ROOT}/${ARCHES_PROJECT}/${ARCHES_PROJECT}/settings_local.py) && echo $STATIC_ROOT
 
-RUN (cd $WEB_ROOT/arches/arches && NODE_OPTIONS=--max_old_space_size=8192 NODE_PATH=$WEB_ROOT/$ARCHES_PROJECT/$ARCHES_PROJECT/media/node_modules yarn install)
-RUN (cd $WEB_ROOT/$ARCHES_PROJECT/$ARCHES_PROJECT && NODE_OPTIONS=--max_old_space_size=8192 NODE_PATH=./media/node_modules yarn install -D)
+RUN (cd $WEB_ROOT/arches && NODE_OPTIONS=--max_old_space_size=8192 NODE_PATH=$WEB_ROOT/$ARCHES_PROJECT/node_modules npm install)
+RUN (cd $WEB_ROOT/$ARCHES_PROJECT && NODE_OPTIONS=--max_old_space_size=8192 NODE_PATH=./node_modules npm install -D)
 RUN apt-get update && apt-get -y install python3-libxml2 git
-RUN /bin/bash -c ". ../ENV/bin/activate;\
-python manage.py createcachetable;\
-python manage.py load_ontology -s ${ARCHES_PROJECT}/pkg/ontologies;\
-python manage.py packages -o load_package -s ${ARCHES_PROJECT}/pkg/ -y --no-business_data;\
-python manage.py es index_database\
-";
+#RUN /bin/bash -c ". ../ENV/bin/activate;\
+#python manage.py createcachetable;\
+#python manage.py load_ontology -s ${ARCHES_PROJECT}/pkg/ontologies;\
+#echo 'Need to replace: python manage.py packages -o load_package -s ${ARCHES_PROJECT}/pkg/ -y --no-business_data';\
+#python manage.py es index_database\
+#";
 COPY ./${ARCHES_PROJECT}/settings.py ${WEB_ROOT}/${ARCHES_PROJECT}/${ARCHES_PROJECT}/settings.py
-RUN echo $WEB_ROOT "|" $ARCHES_PROJECT && ${WEB_ROOT}/entrypoint.sh run_arches
-RUN echo $WEB_ROOT "|" $ARCHES_PROJECT && ${WEB_ROOT}/entrypoint.sh run_yarn_build_${ARCHES_ENVIRONMENT}
+#RUN echo $WEB_ROOT "|" $ARCHES_PROJECT && ${WEB_ROOT}/entrypoint.sh run_arches
+#RUN echo $WEB_ROOT "|" $ARCHES_PROJECT && rm -f ${WEB_ROOT}/${ARCHES_PROJECT}/.frontend-configuration-settings.json && /bin/bash -c ". ../ENV/bin/activate; python manage.py check" && cat ${WEB_ROOT}/${ARCHES_PROJECT}/.frontend-configuration-settings.json
+RUN echo $WEB_ROOT "|" $ARCHES_PROJECT && /bin/bash -c ". ../ENV/bin/activate; python manage.py shell"
+RUN echo $WEB_ROOT "|" $ARCHES_PROJECT && ${WEB_ROOT}/entrypoint.sh run_npm_build_${ARCHES_ENVIRONMENT}
 
 FROM nginxinc/nginx-unprivileged:1.21.5-alpine
 ARG WEB_ROOT=/web_root
@@ -77,8 +79,10 @@ ARG STATIC_ROOT=/static_root
 ARG ARCHES_PROJECT
 COPY --from=arches ${WEB_ROOT}/${ARCHES_PROJECT}/${ARCHES_PROJECT}/media/* /usr/share/nginx/html/
 COPY --from=arches ${WEB_ROOT}/${ARCHES_PROJECT}/${ARCHES_PROJECT}/media/build/js/* /usr/share/nginx/html/js/
-COPY --from=arches ${WEB_ROOT}/${ARCHES_PROJECT}/${ARCHES_PROJECT}/webpack/webpack-stats.json /usr/share/nginx/webpack-stats.json
-COPY --from=arches ${WEB_ROOT}/${ARCHES_PROJECT}/${ARCHES_PROJECT}/media/node_modules/js-cookie/src/js.cookie.js /usr/share/nginx/html/js/js-cookie.js
+COPY --from=arches ${WEB_ROOT}/${ARCHES_PROJECT}/webpack/webpack-stats.json /usr/share/nginx/webpack-stats.json
+COPY --from=arches ${WEB_ROOT}/${ARCHES_PROJECT}/frontend_configuration /usr/share/nginx/frontend_configuration
+#COPY --from=arches ${WEB_ROOT}/${ARCHES_PROJECT}/.frontend-configuration-settings.json /usr/share/nginx/.frontend-configuration-settings.json
+#COPY --from=arches ${WEB_ROOT}/${ARCHES_PROJECT}/.tsconfig-paths.json /usr/share/nginx/.tsconfig-paths.json
 COPY --from=arches ${STATIC_ROOT} /usr/share/nginx/html/static
 COPY ./docker/default.conf  /etc/nginx/conf.d/default.conf
 #RUN mv /usr/share/nginx/html/static/* /usr/share/nginx/html

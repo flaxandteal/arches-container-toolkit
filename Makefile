@@ -4,27 +4,92 @@ TOOLKIT_REPO = https://github.com/flaxandteal/arches-container-toolkit
 TOOLKIT_FOLDER = docker
 TOOLKIT_RELEASE = main
 ARCHES_PROJECT ?= $(shell ls -1 */__init__.py | head -n 1 | sed 's/\/.*//g')
-ARCHES_BASE = ghcr.io/flaxandteal/arches-base-7.5-dev:coral
+ifeq ($(wildcard /../arches),)
+	ARCHES_ROOT=$(realpath ../arches)
+else
+	
+	ARCHES_ROOT=
+endif
+ifneq ($(ARCHES_ROOT),)
+  DOCKER_COMPOSE_FILES = -f docker/docker-compose.yml -f docker/docker-compose.volumes.yml
+else
+  DOCKER_COMPOSE_FILES = -f docker/docker-compose.yml
+endif
+ARCHES_BASE = ghcr.io/flaxandteal/arches-base:docker-8.1.0-release
 ARCHES_PROJECT_ROOT = $(shell pwd)/
-DOCKER_COMPOSE_COMMAND = ARCHES_PROJECT_ROOT=$(ARCHES_PROJECT_ROOT) ARCHES_BASE=$(ARCHES_BASE) ARCHES_PROJECT=$(ARCHES_PROJECT) docker-compose -p $(ARCHES_PROJECT) -f docker/docker-compose.yml
+DOCKER_COMPOSE_COMMAND = ARCHES_PROJECT_ROOT=$(ARCHES_PROJECT_ROOT) ARCHES_BASE=$(ARCHES_BASE) ARCHES_PROJECT=$(ARCHES_PROJECT) ARCHES_ROOT=$(ARCHES_ROOT) docker compose -p $(ARCHES_PROJECT) $(DOCKER_COMPOSE_FILES)
+USE_LOCAL_APPS ?= false
 CMD ?=
+
+.PHONY: cypress test docker rebuild-images build create-github-action down run web npm-development docker-compose manage webpack clean help npm-install npm-update create-apps-dir update-urls-debug install-app
 
 create: docker
 	echo $(shell id -u)
-	FORUSER=$(shell id -u) $(DOCKER_COMPOSE_COMMAND) run -e FORUSER=$(shell id -u) --entrypoint /bin/sh arches_base -c ". ../ENV/bin/activate; apt install -y git; pip install 'pyjwt<2.1,>=2.0.0' 'cryptography<3.4.0' --only-binary cryptography --only-binary cffi; cd /local_root; ls -ltr; id -u; arches-project create $(ARCHES_PROJECT) && mv docker Makefile $(ARCHES_PROJECT); ls -ltr; echo \$${FORUSER}; groupadd -g \$${FORUSER} externaluser; useradd -u \$${FORUSER} -g \$${FORUSER} externaluser; chown -R \$${FORUSER}:\$${FORUSER} $(ARCHES_PROJECT); echo \$$?; ls -ltr $(ARCHES_PROJECT)"
+	FORUSER=$(shell id -u) $(DOCKER_COMPOSE_COMMAND) run -e FORUSER=$(shell id -u) --entrypoint /bin/sh arches_base -c ". ../ENV/bin/activate; apt install -y git; pip install 'pyjwt<2.1,>=2.0.0' 'cryptography<3.4.0' --only-binary cryptography --only-binary cffi; cd /local_root; ls -ltr; id -u; arches-admin startproject $(ARCHES_PROJECT) && mv docker Makefile $(ARCHES_PROJECT); ls -ltr; echo \$${FORUSER}; groupadd -g \$${FORUSER} externaluser; useradd -u \$${FORUSER} -g \$${FORUSER} externaluser; chown -R \$${FORUSER}:\$${FORUSER} $(ARCHES_PROJECT); echo \$$?; ls -ltr $(ARCHES_PROJECT)"
+
+post-create-setup:
+	@echo "Updating project configuration files..."
+	@# Update GitHub Actions workflow - PostGIS image
+	@if [ -f "$(ARCHES_PROJECT_ROOT).github/workflows/main.yml" ]; then \
+		sed -i.bak 's|postgis/postgis:14-3\.4|ghcr.io/flaxandteal/arches-postgis:docker-8.1|g' $(ARCHES_PROJECT_ROOT).github/workflows/main.yml && \
+		echo "✓ Updated .github/workflows/main.yml PostGIS image: postgis/postgis:14-3.4 → ghcr.io/flaxandteal/arches-postgis:docker-8.1"; \
+	else \
+		echo "⚠ .github/workflows/main.yml not found, skipping PostGIS update..."; \
+	fi
+	@# Update GitHub Actions workflow - Arches base image
+	@if [ -f "$(ARCHES_PROJECT_ROOT).github/workflows/main.yml" ]; then \
+		sed -i.bak 's|ghcr.io/flaxandteal/arches-base:docker-8.1|$(ARCHES_BASE)|g' $(ARCHES_PROJECT_ROOT).github/workflows/main.yml && \
+		rm -f $(ARCHES_PROJECT_ROOT).github/workflows/main.yml.bak && \
+		echo "✓ Updated .github/workflows/main.yml Arches base image: $(ARCHES_BASE)"; \
+	else \
+		echo "⚠ .github/workflows/main.yml not found, skipping base image update..."; \
+	fi
+	@# Update pyproject.toml Arches version constraint
+	@if [ -f "$(ARCHES_PROJECT_ROOT)pyproject.toml" ]; then \
+		sed -i.bak 's/arches>=8\.1\.0/arches>=8.0.0/g' $(ARCHES_PROJECT_ROOT)pyproject.toml && \
+		rm -f $(ARCHES_PROJECT_ROOT)pyproject.toml.bak && \
+		echo "✓ Updated pyproject.toml: arches>=8.1.0 → arches>=8.0.0"; \
+	else \
+		echo "⚠ pyproject.toml not found, skipping..."; \
+	fi
+	@echo "Post-create setup complete!"
 
 cypress.config.js: dl-docker
 	cp docker/tests/cypress.config.js $(ARCHES_PROJECT_ROOT)
 	cp -R docker/tests/cypress $(ARCHES_PROJECT_ROOT)
 
-.PHONY: cypress
 cypress: cypress.config.js
 
-.PHONY: test
 test: cypress
 
-.PHONY: docker
 docker: dl-docker
+
+create-apps-dir:
+	@if [ ! -d "../arches_apps" ]; then \
+    	mkdir -p "../arches_apps"; \
+		APPS_DIR=../arches_apps \
+    	echo "Created arches_apps directory"; \
+	else \
+    	echo "arches_apps already exists"; \
+	fi
+
+install-app:
+	@if [ -z "$(URL)" ]; then \
+		echo "Error: No GitHub URL provided. Usage: make install-app URL=<repo_url> [BRANCH=<branch>]"; \
+		exit 1; \
+	fi
+	python3 $(TOOLKIT_FOLDER)/install_app.py "$(URL)" $(if $(BRANCH),--branch "$(BRANCH)") --project-root "$(ARCHES_PROJECT_ROOT)"
+	@echo ""
+	@echo "You may need to run python manage.py migrate to install any models in the app"
+	@echo "Make sure to rebuild the project frontend"
+
+update-urls-debug:
+	@if ! grep -q "from django.contrib.staticfiles import views" $(ARCHES_PROJECT_ROOT)/$(ARCHES_PROJECT)/urls.py; then \
+    	echo "Adding DEBUG static file serving to urls.py"; \
+    	echo "\nif settings.DEBUG:\n    from django.contrib.staticfiles import views\n    from django.urls import re_path\n    urlpatterns += [\n        re_path(r'^static/(?P<path>.*)$', views.serve),\n    ]" >> $(ARCHES_PROJECT_ROOT)/$(ARCHES_PROJECT)/urls.py; \
+	else \
+    	echo "DEBUG static file serving already exists in urls.py"; \
+	fi
 
 dl-docker:
 	@echo ARCHES_PROJECT is [$(ARCHES_PROJECT)]
@@ -58,24 +123,28 @@ endif
 endif
 	@if [ "$$(diff Makefile $(TOOLKIT_FOLDER)/Makefile)" != "" ]; then echo "Your Makefile in this directory does not match the one in directory [$(TOOLKIT_FOLDER)], do you need to update it by copying it over this one or vice versa?"; echo; fi
 
-.PHONY: rebuild-images
 rebuild-images: docker
-	$(DOCKER_COMPOSE_COMMAND) build
+	$(DOCKER_COMPOSE_COMMAND) build --build-arg USE_LOCAL_APPS=$(USE_LOCAL_APPS)
 
-.PHONY: build
+npm-install: docker
+	$(DOCKER_COMPOSE_COMMAND) run --entrypoint /web_root/entrypoint.sh arches_worker install_npm_components
+
+npm-update: docker
+	$(DOCKER_COMPOSE_COMMAND) run --entrypoint /web_root/entrypoint.sh arches_worker update_npm_components
+
 build: docker
 	# We need to have certain node modules, so if the additional ones are missing, clean the folder to ensure boostrap does so.
-	if [ -z $(ARCHES_PROJECT)/media/node_modules/jquery-validation ]; then rm -rf $(ARCHES_PROJECT)/media/node_modules; fi
+	if [ -z node_modules/jquery-validation ]; then rm -rf node_modules; fi
 	$(DOCKER_COMPOSE_COMMAND) stop
-	$(DOCKER_COMPOSE_COMMAND) run --entrypoint /web_root/entrypoint.sh arches_worker install_yarn_components
+	$(DOCKER_COMPOSE_COMMAND) run --entrypoint /web_root/entrypoint.sh arches_worker install_npm_components
 	$(DOCKER_COMPOSE_COMMAND) run --entrypoint /web_root/entrypoint.sh arches_worker bootstrap
 
 	if [ -d $(ARCHES_PROJECT)/pkg ]; then $(TOOLKIT_FOLDER)/act.py . load_package --yes; fi
-	$(DOCKER_COMPOSE_COMMAND) run --entrypoint /web_root/entrypoint.sh arches_worker run_yarn_build_development
+	$(DOCKER_COMPOSE_COMMAND) run --entrypoint /web_root/entrypoint.sh arches_worker run_npm_build_development
 	$(DOCKER_COMPOSE_COMMAND) stop
-	@echo "IF THIS IS YOUR FIRST TIME RUNNING make build AND YOU HAVE NOT ALREADY, MAKE SURE TO UPDATE urls.py (see make help)"
+	$(MAKE) create-apps-dir
+	$(MAKE) update-urls-debug
 
-.PHONY: create-github-action
 create-github-action: cypress docker
 	mkdir -p  $(ARCHES_PROJECT_ROOT).github/workflows
 	cp $(TOOLKIT_FOLDER)/project.yml $(ARCHES_PROJECT_ROOT).github/workflows
@@ -83,41 +152,32 @@ create-github-action: cypress docker
 	sed -i "s#__ARCHESBASE__#$(ARCHES_BASE)#g" $(ARCHES_PROJECT_ROOT).github/workflows/project.yml
 	@echo "You will now need to git-add your .github folder and commit it. On your next push, you should find Arches builds."
 
-.PHONY: down
 down: docker
 	$(DOCKER_COMPOSE_COMMAND) down
 
-.PHONY: run
 run: docker
 	$(DOCKER_COMPOSE_COMMAND) up
 
-.PHONY: web
 web: docker
 	$(DOCKER_COMPOSE_COMMAND) stop arches
 	$(DOCKER_COMPOSE_COMMAND) run --service-ports arches
 
-.PHONY: yarn-development
-yarn-development: docker
-	$(DOCKER_COMPOSE_COMMAND) run --entrypoint /web_root/entrypoint.sh arches_worker run_yarn_build_development
+npm-development: docker
+	$(DOCKER_COMPOSE_COMMAND) run --entrypoint /web_root/entrypoint.sh arches_worker run_npm_build_development
 
-.PHONY: docker-compose
 docker-compose: docker
 	$(DOCKER_COMPOSE_COMMAND) $(shell echo $(CMD))
 
-.PHONY: manage
 manage: docker
 	$(DOCKER_COMPOSE_COMMAND) run --entrypoint /bin/bash arches_worker -c '. ../ENV/bin/activate; python manage.py $(CMD)'
 
-.PHONY: webpack
 webpack: docker
-	$(DOCKER_COMPOSE_COMMAND) run --entrypoint /bin/bash arches_worker -c '. ../ENV/bin/activate; cd $(ARCHES_PROJECT); DJANGO_MODE=DEV NODE_PATH=./media/node_modules NODE_OPTIONS=--max_old_space_size=8192 node --inspect ./media/node_modules/.bin/webpack --config webpack/webpack.config.dev.js'
+	$(DOCKER_COMPOSE_COMMAND) run --entrypoint /web_root/entrypoint.sh arches_worker run_npm_build_development
 
-.PHONY: clean
 clean: docker
 	@echo -n "This will remove all database and elasticsearch data, are you sure? [y/N] " && read confirmation && [ $${confirmation:-N} = y ]
 	$(DOCKER_COMPOSE_COMMAND) down -v --rmi all
 
-.PHONY: help
 help:
 	@echo
 	@echo "ARCHES F&T CONTAINER TOOLS"

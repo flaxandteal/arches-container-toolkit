@@ -21,24 +21,18 @@ if [[ -z ${ARCHES_PROJECT} ]]; then
 	PACKAGE_JSON_FOLDER=${ARCHES_ROOT}/arches/install
 else
 	APP_FOLDER=${WEB_ROOT}/${ARCHES_PROJECT}
-	# due to https://github.com/archesproject/arches/issues/4841, changes were made to yarn install
-	# and module deployment. Using the arches install directory for yarn.
+	# due to https://github.com/archesproject/arches/issues/4841, changes were made to npm install
+	# and module deployment. Using the arches install directory for npm.
 	# PTW PACKAGE_JSON_FOLDER=${ARCHES_ROOT}/arches/install
-	PACKAGE_JSON_FOLDER=${WEB_ROOT}/${ARCHES_PROJECT}/${ARCHES_PROJECT}
+	PACKAGE_JSON_FOLDER=${WEB_ROOT}/${ARCHES_PROJECT}
 fi
 
-# Read modules folder from yarn config file
+# Read modules folder from npm config file
 # Get string after '--install.modules-folder' -> get first word of the result 
 # -> remove line endlings -> trim quotes -> trim leading ./
-YARN_MODULES_FOLDER=${PACKAGE_JSON_FOLDER}/$(awk \
-	-F '--install.modules-folder' '{print $2}' ${PACKAGE_JSON_FOLDER}/.yarnrc \
-	| awk '{print $1}' \
-	| tr -d $'\r' \
-	| tr -d '"' \
-	| sed -e "s/^\.\///g")
+NPM_MODULES_FOLDER=${PACKAGE_JSON_FOLDER}/node_modules
 
 export DJANGO_PORT=${DJANGO_PORT:-8000}
-#COUCHDB_URL="http://$COUCHDB_USER:$COUCHDB_PASS@$COUCHDB_HOST:$COUCHDB_PORT"
 STATIC_ROOT=${STATIC_ROOT:-/static_root}
 
 export ALLOW_BOOTSTRAP=${ALLOW_BOOTSTRAP:-}
@@ -59,7 +53,7 @@ cd_app_folder() {
 	echo "Current work directory: ${APP_FOLDER}"
 }
 
-cd_yarn_folder() {
+cd_npm_folder() {
 	cd ${PACKAGE_JSON_FOLDER}
 	echo "Current work directory: ${PACKAGE_JSON_FOLDER}"
 }
@@ -79,6 +73,7 @@ init_arches() {
 		echo ""
 	else
 		if [[ "${ALLOW_BOOTSTRAP}" == "True" ]]; then
+			echo "Database ${PGDBNAME} does not exists yet, starting setup..."
 			setup_arches
 		else
 			echo "Database ${PGDBNAME} does not exist yet, exiting until you 'entrypoint.sh bootstrap'..."
@@ -91,16 +86,18 @@ init_arches() {
 bootstrap() {
 	init_arches_project
 
-	init_yarn_components
+	init_npm_components
 
 	setup_arches
 
-	run_yarn_build_development
+	run_npm_build_development
 
 }
 
+
 # Setup Postgresql and Elasticsearch
 setup_arches() {
+
 	cd_arches_root
 
 	echo "" && echo ""
@@ -114,10 +111,6 @@ setup_arches() {
 	echo "Running: python manage.py setup_db --force"
 	python ${APP_FOLDER}/manage.py setup_db --force
 
-    #echo "Running: Creating couchdb system databases"
-    #curl -X PUT ${COUCHDB_URL}/_users
-    #curl -X PUT ${COUCHDB_URL}/_global_changes
-    #curl -X PUT ${COUCHDB_URL}/_replicator
 
 	if [[ "${INSTALL_DEFAULT_GRAPHS}" == "True" ]]; then
 		# Import graphs
@@ -160,23 +153,25 @@ setup_arches() {
 }
 
 wait_for_db() {
-	echo "Testing if database server is up..."
-	while [[ ! ${return_code} == 0 ]]
-	do
-        psql --host=${PGHOST} --port=${PGPORT} --user=${PGUSERNAME} --dbname=postgres -c "select 1" >&/dev/null
-		return_code=$?
-		sleep 1
-	done
-	echo "Database server is up"
+	echo "Waiting for database and Elasticsearch..."
 
-    echo "Testing if Elasticsearch is up..."
-    while [[ ! ${return_code} == 0 ]]
-    do
-        curl -s "http://${ESHOST}:${ESPORT}/_cluster/health?wait_for_status=green&timeout=60s" >&/dev/null
-        return_code=$?
-        sleep 1
-    done
-    echo "Elasticsearch is up"
+	# Poll both services in parallel
+	(
+		while ! psql --host=${PGHOST} --port=${PGPORT} --user=${PGUSERNAME} --dbname=postgres -c "select 1" &>/dev/null; do
+			sleep 1
+		done
+		echo "Database server is up"
+	) &
+
+	(
+		while ! curl -sf "http://${ESHOST}:${ESPORT}/_cluster/health?wait_for_status=yellow&timeout=60s" &>/dev/null; do
+			sleep 1
+		done
+		echo "Elasticsearch is up"
+	) &
+
+	wait
+	echo "All services are ready"
 }
 
 db_exists() {
@@ -209,23 +204,39 @@ set_dev_mode() {
 }
 
 
-# Yarn
-init_yarn_components() {
-	if [[ ! -d ${YARN_MODULES_FOLDER} ]] || [[ ! "$(ls ${YARN_MODULES_FOLDER})" ]]; then
-		echo "Yarn modules do not exist, installing..."
-		install_yarn_components
+# npm
+init_npm_components() {
+	if [[ ! -d ${NPM_MODULES_FOLDER} ]] || [[ ! "$(ls ${NPM_MODULES_FOLDER})" ]]; then
+		echo "npm modules do not exist, installing..."
+		install_npm_components
 	fi
 }
 
 # This is also done in Dockerfile, but that does not include user's custom Arches app package.json
 # Also, the packages folder may have been overlaid by a Docker volume.
-install_yarn_components() {
+install_npm_components() {
 	echo ""
 	echo ""
-	echo "----- INSTALLING YARN COMPONENTS -----"
+	echo "----- INSTALLING NPM COMPONENTS -----"
 	echo ""
-	cd_yarn_folder
-	yarn install -D
+	cd_npm_folder
+	npm install
+	# Verify lodash isn't truncated (intermittent tar extraction issue under buildkit overlay fs)
+	if [ -d node_modules/lodash ] && [ ! -f node_modules/lodash/_baseSortedIndex.js ]; then
+		echo "lodash appears truncated, reinstalling..."
+		rm -rf node_modules/lodash
+		npm cache clean --force || true
+		npm install
+	fi
+}
+
+update_npm_components() {
+	echo ""
+	echo ""
+	echo "----- UPDATING NPM COMPONENTS -----"
+	echo ""
+	cd_npm_folder
+	npm update
 }
 
 #### Main commands
@@ -248,37 +259,31 @@ run_graphql_server() {
         uvicorn --host 0.0.0.0 --port 8000 ${ARCHES_PROJECT}.graph.asgi:app
 }
 
-run_yarn_start() {
+run_npm_start() {
 	echo ""
 	echo ""
-	echo "----- RUNNING YARN SERVER -----"
+	echo "----- RUNNING NPM SERVER -----"
 	echo ""
 	cd_app_folder
-	sleep 10
-	cd ${ARCHES_PROJECT}
-	yarn start
+	npm start
 }
 
-run_yarn_build_production() {
+run_npm_build_production() {
 	echo ""
 	echo ""
-	echo "----- RUNNING YARN SERVER -----"
+	echo "----- RUNNING NPM BUILD PRODUCTION -----"
 	echo ""
 	cd_app_folder
-	sleep 10
-	cd ${ARCHES_PROJECT}
-	yarn build_production
+	npm run build_production
 }
 
-run_yarn_build_development() {
+run_npm_build_development() {
 	echo ""
 	echo ""
-	echo "----- RUNNING YARN SERVER -----"
+	echo "----- RUNNING NPM BUILD DEVELOPMENT -----"
 	echo ""
 	cd_app_folder
-	sleep 10
-	cd ${ARCHES_PROJECT}
-	yarn build_development
+	npm run build_development
 }
 
 
@@ -398,7 +403,6 @@ collect_static_real(){
 	echo ""
 	cd_app_folder
 	python manage.py collectstatic --noinput
-	python manage.py compress --verbosity=3
 }
 
 
@@ -434,7 +438,7 @@ run_api_server() {
 	cd_app_folder
 
 	if [[ ! -z ${ARCHES_PROJECT} ]]; then
-        DJANGO_SETTINGS_MODULE=${ARCHES_PROJECT}.settings gunicorn arches_orm.graphql.django_asgi:app \
+        DJANGO_SETTINGS_MODULE=${ARCHES_PROJECT}.settings gunicorn ${ARCHES_PROJECT}.asgi:application \
             --config ${ARCHES_ROOT}/docker/gunicorn_config.py \
 	    -k uvicorn.workers.UvicornWorker
 	fi
@@ -457,15 +461,45 @@ run_gunicorn_server() {
     fi
 }
 
+install_arches_apps() {
+	echo "Installing local apps in editable mode..."
 
+	ARCHES_APPS_DIR="${WEB_ROOT}/arches_apps"
+
+	# Ensure the expected directory exists (mounted by docker-compose)
+	if [[ ! -d "${ARCHES_APPS_DIR}" ]]; then
+		echo "No arches_app directory found, mounted apps will not be installed"
+		return 0
+	fi
+
+	# If directory exists but is empty, warn and skip installation.
+	shopt -s nullglob
+	apps=("${ARCHES_APPS_DIR}"/*)
+	shopt -u nullglob
+	if [[ ${#apps[@]} -eq 0 ]]; then
+		echo "Warning: '${ARCHES_APPS_DIR}' is empty — nothing to install."
+		return 0
+	fi
+
+	for d in "${ARCHES_APPS_DIR}"/*; do
+		if [[ -d "$d" ]]; then
+			pip install --no-deps -e "$d" || pip install -e "$d" || true
+			echo "Installed $d"
+		fi
+	done
+}
 
 #### Main commands
 run_arches() {
 
 	init_arches
 
+	init_npm_components
+
 	if [[ "${DJANGO_MODE}" == "DEV" ]]; then
-		set_dev_mode
+		if [[ "${USE_LOCAL_APPS}" == "true" ]]; then
+			install_arches_apps
+		fi
 	fi
 
 	run_custom_scripts
@@ -487,7 +521,7 @@ run_tests() {
 	echo "----- RUNNING ARCHES TESTS -----"
 	echo ""
 	cd_arches_root
-	python manage.py test tests --pattern="*.py" --settings="tests.test_settings" --exe
+	PYTHONPATH=. python manage.py test tests --pattern="*.py" --settings="quartz.test.test_settings" --exe
 	if [ $? -ne 0 ]; then
         echo "Error: Not all tests ran succesfully."
 		echo "Exiting..."
@@ -553,17 +587,20 @@ do
 			wait_for_db
 			run_migrations
 		;;
-		install_yarn_components)
-			install_yarn_components
+		install_npm_components)
+			install_npm_components
 		;;
-		run_yarn_build_development)
-			run_yarn_build_development
+		install_arches_apps)
+			install_arches_apps
 		;;
-		run_yarn_build_production)
-			run_yarn_build_production
+		run_npm_build_development)
+			run_npm_build_development
 		;;
-		run_yarn_start)
-			run_yarn_start
+		run_npm_build_production)
+			run_npm_build_production
+		;;
+		run_npm_start)
+			run_npm_start
 		;;
 		help|-h)
 			display_help
