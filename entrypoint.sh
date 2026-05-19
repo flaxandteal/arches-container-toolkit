@@ -398,6 +398,25 @@ collect_static_real(){
 	python manage.py collectstatic --noinput
 }
 
+# Used at static-image build time. If arches-base pre-baked the bulky core
+# static (ARCHES_BASE_STATIC), seed STATIC_ROOT from it and only collect the
+# cheap project delta. Older bases lack it: fall back to a full collect so the
+# build never fails. See issue report 2026-05-19.
+collect_static_baked(){
+	cd_app_folder
+	if [[ -n "${ARCHES_BASE_STATIC:-}" && -d "${ARCHES_BASE_STATIC}" ]]; then
+		echo "----- COLLECT STATIC: seeding from baked base + project delta -----"
+		mkdir -p "${STATIC_ROOT}"
+		cp -a "${ARCHES_BASE_STATIC}/." "${STATIC_ROOT}/"
+		# Skip the slow project node_modules walk (already covered by the
+		# baked core set); -i can't exclude that prefixed root, so move it.
+		[[ -d node_modules ]] && mv node_modules node_modules.full
+	else
+		echo "----- COLLECT STATIC: no baked base, full fallback collect -----"
+	fi
+	python manage.py collectstatic --noinput
+}
+
 
 run_django_server() {
 	echo ""
@@ -591,6 +610,9 @@ do
 		;;
 		run_npm_build_production)
 			run_npm_build_production
+		;;
+		collect_static_baked)
+			collect_static_baked
 		;;
 		run_npm_start)
 			run_npm_start
