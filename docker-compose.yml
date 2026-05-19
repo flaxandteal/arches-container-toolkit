@@ -11,7 +11,7 @@ services:
       restart: unless-stopped
       entrypoint: ["../entrypoint.sh"]
       build:
-        context: ${ARCHES_PROJECT_ROOT}./..
+        context: ${ARCHES_PROJECT_ROOT}.
         dockerfile: ${ARCHES_PROJECT_ROOT}./docker/Dockerfile
         args:
           - ARCHES_PROJECT=$ARCHES_PROJECT
@@ -24,6 +24,7 @@ services:
         - arches-log:/arches/arches/logs
         - arches-static:/static_root
         - ${ARCHES_PROJECT_ROOT}.:/web_root/$ARCHES_PROJECT
+        - node-modules:/web_root/$ARCHES_PROJECT/node_modules
         - ${ARCHES_PROJECT_ROOT}./docker/entrypoint.sh:/web_root/entrypoint.sh
         - ${ARCHES_PROJECT_ROOT}./docker/settings_docker.py:/web_root/$ARCHES_PROJECT/$ARCHES_PROJECT/settings_local.py
         - ${ARCHES_PROJECT_ROOT}./../arches:/web_root/arches
@@ -46,6 +47,7 @@ services:
         - CELERY_BROKER_URL=amqp://rabbitmq:rabbitmq@rabbitmq
         - DJANGO_MODE=DEV
         - DJANGO_DEBUG=True
+        - DJANGO_INSECURE_COOKIES=True
         - DOMAIN_NAMES=localhost
         - PYTHONUNBUFFERED=0
         - TZ=PST
@@ -103,7 +105,7 @@ services:
       restart: unless-stopped
       entrypoint: ["../entrypoint.sh"]
       build:
-        context: ${ARCHES_PROJECT_ROOT}./..
+        context: ${ARCHES_PROJECT_ROOT}.
         dockerfile: ${ARCHES_PROJECT_ROOT}./docker/Dockerfile
         args:
           - ARCHES_PROJECT=$ARCHES_PROJECT
@@ -116,6 +118,7 @@ services:
         - arches-log:/arches/arches/logs
         - arches-static:/static_root
         - ${ARCHES_PROJECT_ROOT}.:/web_root/$ARCHES_PROJECT
+        - node-modules:/web_root/$ARCHES_PROJECT/node_modules
         - ${ARCHES_PROJECT_ROOT}./docker/entrypoint.sh:/web_root/entrypoint.sh
         - ${ARCHES_PROJECT_ROOT}./docker/settings_docker.py:/web_root/$ARCHES_PROJECT/$ARCHES_PROJECT/settings_local.py
         - ${ARCHES_PROJECT_ROOT}./../arches_apps:/web_root/arches_apps
@@ -137,6 +140,7 @@ services:
         - ESPORT=9200
         - DJANGO_MODE=DEV
         - DJANGO_DEBUG=True
+        - DJANGO_INSECURE_COOKIES=True
         - DEBUG=True
         # - DJANGO_REMOTE_DEBUG=False
         - DOMAIN_NAMES=localhost
@@ -163,7 +167,7 @@ services:
       restart: unless-stopped
       entrypoint: ["../entrypoint.sh"]
       build:
-        context: ${ARCHES_PROJECT_ROOT}./..
+        context: ${ARCHES_PROJECT_ROOT}.
         dockerfile: ${ARCHES_PROJECT_ROOT}./docker/Dockerfile
         args:
           - ARCHES_PROJECT=$ARCHES_PROJECT
@@ -176,6 +180,7 @@ services:
         - arches-log:/arches/arches/logs
         - arches-static:/static_root
         - ${ARCHES_PROJECT_ROOT}.:/web_root/$ARCHES_PROJECT
+        - node-modules:/web_root/$ARCHES_PROJECT/node_modules
         - ${ARCHES_PROJECT_ROOT}./docker/entrypoint.sh:/web_root/entrypoint.sh
         - ${ARCHES_PROJECT_ROOT}./docker/settings_docker.py:/web_root/$ARCHES_PROJECT/$ARCHES_PROJECT/settings_local.py
         - ${ARCHES_PROJECT_ROOT}./../arches:/web_root/arches
@@ -193,6 +198,7 @@ services:
         - ESPORT=9200
         - DJANGO_MODE=DEV
         - DJANGO_DEBUG=True
+        - DJANGO_INSECURE_COOKIES=True
         - CASBIN_RELOAD_QUEUE=True
         - CASBIN_LISTEN=True
         # - DJANGO_REMOTE_DEBUG=False
@@ -292,3 +298,4 @@ volumes:
     postgres-data:
     elasticsearch-data:
     cantaloupe-data:
+    node-modules:

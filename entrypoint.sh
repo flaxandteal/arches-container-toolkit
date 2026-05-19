@@ -221,6 +221,13 @@ install_npm_components() {
 	echo ""
 	cd_npm_folder
 	npm install
+	# Verify lodash isn't truncated (intermittent tar extraction issue under buildkit overlay fs)
+	if [ -d node_modules/lodash ] && [ ! -f node_modules/lodash/_baseSortedIndex.js ]; then
+		echo "lodash appears truncated, reinstalling..."
+		rm -rf node_modules/lodash
+		npm cache clean --force || true
+		npm install
+	fi
 }
 
 update_npm_components() {
@@ -431,7 +438,7 @@ run_api_server() {
 	cd_app_folder
 
 	if [[ ! -z ${ARCHES_PROJECT} ]]; then
-        DJANGO_SETTINGS_MODULE=${ARCHES_PROJECT}.settings gunicorn arches_orm.graphql.django_asgi:app \
+        DJANGO_SETTINGS_MODULE=${ARCHES_PROJECT}.settings gunicorn ${ARCHES_PROJECT}.asgi:application \
             --config ${ARCHES_ROOT}/docker/gunicorn_config.py \
 	    -k uvicorn.workers.UvicornWorker
 	fi

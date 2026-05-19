@@ -29,6 +29,9 @@ PROGRAM = "Arches F&T Container Toolkit"
 class ArchesProject:
     @staticmethod
     def _get_arches_project_name(root: Path):
+        env_name = os.environ.get("ARCHES_PROJECT")
+        if env_name:
+            return env_name
         project_name = None
         for submodule in root.glob("*/__init__.py"):
             if submodule.parts[0] == "tests":

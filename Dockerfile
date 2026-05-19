@@ -3,7 +3,7 @@ FROM $ARCHES_BASE
 
 ARG ARCHES_PROJECT
 ENV ARCHES_PROJECT $ARCHES_PROJECT
-COPY ${ARCHES_PROJECT}/docker/entrypoint.sh ${WEB_ROOT}/
+COPY docker/entrypoint.sh ${WEB_ROOT}/
 RUN chgrp 1000 ../entrypoint.sh && chmod g+rx ../entrypoint.sh
 RUN apt-get update && apt-get -y install --no-install-recommends \
     python3-libxml2 git build-essential python3-dev xmlsec1 \
@@ -13,7 +13,7 @@ RUN . ../ENV/bin/activate \
     && pip install starlette-graphene3 "lxml" starlette-context "google-auth<2.23" \
        django-authorization casbin-django-orm-adapter \
        django-debug-toolbar django-debug-toolbar-force
-COPY ${ARCHES_PROJECT}/ ${WEB_ROOT}/${ARCHES_PROJECT}/
+COPY . ${WEB_ROOT}/${ARCHES_PROJECT}/
 ARG EDITABLE_BASE=false
 RUN . ../ENV/bin/activate \
     && pip install cachetools websockets pika "protobuf>4.21,<5.0" \
@@ -22,6 +22,7 @@ RUN . ../ENV/bin/activate \
     else \
         pip install ${WEB_ROOT}/arches; \
     fi \
+    && (if [ -f ${WEB_ROOT}/${ARCHES_PROJECT}/requirements.txt ]; then pip install -r ${WEB_ROOT}/${ARCHES_PROJECT}/requirements.txt; fi) \
     && (if [ -f ${WEB_ROOT}/${ARCHES_PROJECT}/pyproject.toml ]; then (cd ${WEB_ROOT}/${ARCHES_PROJECT} && pip install -e .); fi) \
     && if [ "$EDITABLE_BASE" = "True" ]; then \
         pip install -e ${WEB_ROOT}/arches; \
@@ -38,7 +39,7 @@ RUN if [ "$USE_LOCAL_APPS" = "true" ]; then \
 
 RUN mkdir -p ${WEB_ROOT}/${ARCHES_PROJECT}/${ARCHES_PROJECT}/uploadedfiles && chgrp -R 1000 ${WEB_ROOT}/${ARCHES_PROJECT}/${ARCHES_PROJECT}/uploadedfiles && chmod -R g+rw ${WEB_ROOT}/${ARCHES_PROJECT}/${ARCHES_PROJECT}/uploadedfiles
 
-COPY ${ARCHES_PROJECT}/docker/settings_docker.py ${WEB_ROOT}/${ARCHES_PROJECT}/${ARCHES_PROJECT}/settings_local.py
+COPY docker/settings_docker.py ${WEB_ROOT}/${ARCHES_PROJECT}/${ARCHES_PROJECT}/settings_local.py
 RUN echo '{"status": "", "assets": {}, "chunks": {}, "publicPath": "/static/"}' > ${WEB_ROOT}/${ARCHES_PROJECT}/webpack/webpack-stats.json
 
 WORKDIR ${WEB_ROOT}/${ARCHES_PROJECT}/${ARCHES_PROJECT}
