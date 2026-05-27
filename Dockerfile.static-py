@@ -9,10 +9,8 @@ FROM $ARCHES_STATIC_IMAGE as arches_static
 FROM $ARCHES_DYNAMIC_IMAGE as arches
 ARG STATIC_ROOT=/static_root
 
-# Copied as UID 1000 (the runtime USER): Arches rewrites these on every
-# startup via generate_frontend_configuration(), so they must be writable.
-COPY --chown=1000 --from=arches_static /usr/share/nginx/webpack-stats.json ${WEB_ROOT}/${ARCHES_PROJECT}/webpack/webpack-stats.json
-COPY --chown=1000 --from=arches_static /usr/share/nginx/frontend_configuration ${WEB_ROOT}/${ARCHES_PROJECT}/frontend_configuration
+COPY --from=arches_static /usr/share/nginx/webpack-stats.json ${WEB_ROOT}/${ARCHES_PROJECT}/webpack/webpack-stats.json
+COPY --from=arches_static /usr/share/nginx/frontend_configuration ${WEB_ROOT}/${ARCHES_PROJECT}/frontend_configuration
 # RUN mkdir -p ${STATIC_ROOT}/CACHE
 # COPY --from=arches_static /usr/share/nginx/html/static/CACHE/manifest.json ${STATIC_ROOT}/CACHE/manifest.json
 COPY --from=arches_static /usr/share/nginx/html ${WEB_ROOT}/${ARCHES_PROJECT}/${ARCHES_PROJECT}/media/build
