@@ -70,7 +70,7 @@ RUN apt-get update && apt-get -y install python3-libxml2 git
 COPY ./${ARCHES_PROJECT}/settings.py ${WEB_ROOT}/${ARCHES_PROJECT}/${ARCHES_PROJECT}/settings.py
 #RUN echo $WEB_ROOT "|" $ARCHES_PROJECT && ${WEB_ROOT}/entrypoint.sh run_arches
 #RUN echo $WEB_ROOT "|" $ARCHES_PROJECT && rm -f ${WEB_ROOT}/${ARCHES_PROJECT}/.frontend-configuration-settings.json && /bin/bash -c ". ../ENV/bin/activate; python manage.py check" && cat ${WEB_ROOT}/${ARCHES_PROJECT}/.frontend-configuration-settings.json
-RUN echo $WEB_ROOT "|" $ARCHES_PROJECT && /bin/bash -c ". ../ENV/bin/activate; python manage.py shell"
+RUN /bin/bash -c ". ../ENV/bin/activate; python -c 'import django; django.setup()'"
 RUN echo $WEB_ROOT "|" $ARCHES_PROJECT && ${WEB_ROOT}/entrypoint.sh run_npm_build_${ARCHES_ENVIRONMENT}
 # Seeds STATIC_ROOT from arches-base's pre-baked static if present, else does a
 # full collect (older bases). Logic lives in entrypoint.sh:collect_static_baked.
