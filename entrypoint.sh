@@ -206,6 +206,16 @@ set_dev_mode() {
 
 # npm
 init_npm_components() {
+	# If the image has webpack output pre-baked into media/build, node_modules is
+	# not needed at runtime (django-webpack-loader resolves everything through
+	# webpack-stats.json -> media/build). Skip the reinstall.
+	local media_build="${PACKAGE_JSON_FOLDER}/${ARCHES_PROJECT}/media/build"
+	if [[ -d "${media_build}" ]] && [[ -n "$(ls -A "${media_build}" 2>/dev/null)" ]]; then
+		return 0
+	fi
+	if [[ "${SKIP_NPM_INSTALL:-false}" == "true" ]]; then
+		return 0
+	fi
 	if [[ ! -d ${NPM_MODULES_FOLDER} ]] || [[ ! "$(ls ${NPM_MODULES_FOLDER})" ]]; then
 		echo "npm modules do not exist, installing..."
 		install_npm_components

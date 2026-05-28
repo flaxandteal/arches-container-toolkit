@@ -8,7 +8,8 @@ ENV ARCHES_ROOT=${WEB_ROOT}/arches
 ENV WHEELS=/wheels
 ENV PYTHONUNBUFFERED=1
 
-RUN apt-get update && apt-get install -y make software-properties-common
+RUN apt-get update && apt-get install -y --no-install-recommends make software-properties-common \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 FROM base AS wheelbuilder
 
@@ -33,9 +34,9 @@ RUN set -ex \
         dos2unix \
         " \
     && apt-get update -y \
-    && apt-get install -y --no-install-recommends $BUILD_DEPS
-
-RUN apt-get install -y python3-pip
+    && apt-get install -y --no-install-recommends $BUILD_DEPS \
+    && apt-get install -y --no-install-recommends python3-pip \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 RUN pip wheel --no-cache-dir gunicorn \
     && pip wheel --no-cache-dir django-auth-ldap \
@@ -46,7 +47,7 @@ COPY docker/entrypoint.sh ${WHEELS}/entrypoint.sh
 RUN chmod -R 700 ${WHEELS} &&\
   dos2unix ${WHEELS}/*.sh
 
-FROM base 
+FROM base
 
 # Get the pre-built python wheels from the build environment
 RUN mkdir ${WEB_ROOT}
@@ -54,10 +55,6 @@ RUN mkdir ${WEB_ROOT}
 COPY --from=wheelbuilder ${WHEELS} /wheels
 
 # Install packages required to run Arches
-# Note that the ubuntu/debian package for libgdal1-dev pulls in libgdal1i, which is built
-# with everything enabled, and so, it has a huge amount of dependancies (everything that GDAL
-# support, directly and indirectly pulling in mysql-common, odbc, jp2, perl! ... )
-# a minimised build of GDAL could remove several hundred MB from the container layer.
 RUN set -ex \
     && RUN_DEPS=" \
         libgdal-dev \
@@ -78,14 +75,16 @@ RUN set -ex \
     && echo "deb [signed-by=/etc/apt/keyrings/postgresql.gpg] http://apt.postgresql.org/pub/repos/apt/ $(lsb_release -sc)-pgdg main" > /etc/apt/sources.list.d/pgdg.list \
     && apt-get update -y \
     && apt-get install -y --no-install-recommends $RUN_DEPS \
-    && apt-get install -y nodejs
+    && apt-get install -y --no-install-recommends nodejs git \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Install npm components
 COPY ./package.json ${ARCHES_ROOT}/package.json
 WORKDIR ${ARCHES_ROOT}
 RUN mkdir -p ${ARCHES_ROOT}/node_modules
-RUN apt-get install -y git
-RUN npm install
+RUN npm install \
+    && npm cache clean --force \
+    && rm -rf /root/.npm /tmp/*
 
 ## Install virtualenv
 WORKDIR ${WEB_ROOT}
@@ -94,33 +93,30 @@ RUN mv ${WHEELS}/entrypoint.sh entrypoint.sh
 
 RUN python3.12 -m venv ENV \
     && . ENV/bin/activate \
-    && pip install --upgrade pip \
-    && pip install wheel setuptools requests \
-    && pip install -f ${WHEELS} django-auth-ldap \
-    && pip install -f ${WHEELS} gunicorn \
-    && pip install -f ${WHEELS} psycopg2==2.9.10 \
-    && rm -rf ${WHEELS} \
-    && rm -rf /root/.cache/pip/*
+    && pip install --no-cache-dir --upgrade pip \
+    && pip install --no-cache-dir wheel setuptools requests \
+    && pip install --no-cache-dir -f ${WHEELS} django-auth-ldap \
+    && pip install --no-cache-dir -f ${WHEELS} gunicorn \
+    && pip install --no-cache-dir -f ${WHEELS} psycopg2==2.9.10 \
+    && rm -rf ${WHEELS} /root/.cache/pip
 
 # Install the Arches application
 # FIXME: ADD from github repository instead?
 COPY . ${ARCHES_ROOT}
 
-# From here, run commands from ARCHES_ROOT
 WORKDIR ${ARCHES_ROOT}
 
 RUN . ../ENV/bin/activate \
-    && pip install -e . --group dev
-
-# Set default workdir
-WORKDIR ${ARCHES_ROOT}
+    && pip install --no-cache-dir -e . --group dev \
+    && rm -rf /root/.cache/pip
 
 COPY docker/gunicorn_config.py ${ARCHES_ROOT}/gunicorn_config.py
 COPY docker/settings_local.py ${ARCHES_ROOT}/arches/settings_local.py
 
-# Set entrypoint
+# Strip __pycache__ accumulated during pip installs.
+RUN find ${WEB_ROOT} -type d -name __pycache__ -prune -exec rm -rf {} + || true
+
 ENTRYPOINT ["../entrypoint.sh"]
 CMD ["run_arches"]
 
-# Expose port 8000
 EXPOSE 8000
