@@ -1,6 +1,6 @@
 ARG VERSION
 ARG ARCHES_PROJECT=scarlet
-ARG ARCHES_BASE=ghcr.io/flaxandteal/arches-base:docker-8.1.0-release
+ARG ARCHES_BASE=ghcr.io/flaxandteal/arches-base:docker-8.2.0a3
 ARG ARCHES_DYNAMIC_IMAGE=flaxandteal_${ARCHES_PROJECT}:$VERSION
 ARG WEB_ROOT=/web_root
 ARG ARCHES_ENVIRONMENT=production

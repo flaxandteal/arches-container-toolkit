@@ -40,7 +40,7 @@ RUN set -ex \
 
 RUN pip wheel --no-cache-dir gunicorn \
     && pip wheel --no-cache-dir django-auth-ldap \
-    && pip wheel --no-cache-dir psycopg2==2.9.10
+    && pip wheel --no-cache-dir psycopg2==2.9.11
 
 # Add Docker-related files
 COPY docker/entrypoint.sh ${WHEELS}/entrypoint.sh
@@ -93,12 +93,13 @@ RUN mv ${WHEELS}/entrypoint.sh entrypoint.sh
 
 RUN python3.12 -m venv ENV \
     && . ENV/bin/activate \
-    && pip install --no-cache-dir --upgrade pip \
-    && pip install --no-cache-dir wheel setuptools requests \
-    && pip install --no-cache-dir -f ${WHEELS} django-auth-ldap \
-    && pip install --no-cache-dir -f ${WHEELS} gunicorn \
-    && pip install --no-cache-dir -f ${WHEELS} psycopg2==2.9.10 \
-    && rm -rf ${WHEELS} /root/.cache/pip
+    && pip install --upgrade pip \
+    && pip install wheel setuptools requests \
+    && pip install -f ${WHEELS} django-auth-ldap \
+    && pip install -f ${WHEELS} gunicorn \
+    && pip install -f ${WHEELS} psycopg2==2.9.11 \
+    && rm -rf ${WHEELS} \
+    && rm -rf /root/.cache/pip/*
 
 # Install the Arches application
 # FIXME: ADD from github repository instead?
