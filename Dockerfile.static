@@ -76,6 +76,7 @@ RUN echo $WEB_ROOT "|" $ARCHES_PROJECT && ${WEB_ROOT}/entrypoint.sh run_npm_buil
 # full collect (older bases). Logic lives in entrypoint.sh:collect_static_baked.
 
 RUN echo $WEB_ROOT "|" $ARCHES_PROJECT && ${WEB_ROOT}/entrypoint.sh collect_static_baked
+RUN /bin/bash -c ". ../ENV/bin/activate; python manage.py collectstatic --noinput"
 
 FROM nginxinc/nginx-unprivileged:1.21.5-alpine
 ARG WEB_ROOT=/web_root
