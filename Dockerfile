@@ -1,4 +1,4 @@
-ARG ARCHES_BASE=ghcr.io/flaxandteal/arches-base:docker-8.1.0-release
+ARG ARCHES_BASE=ghcr.io/flaxandteal/arches-base:docker-8.2.0a4-v3
 FROM $ARCHES_BASE
 
 ARG ARCHES_PROJECT
@@ -32,7 +32,8 @@ COPY arches_app[s]/ ${WEB_ROOT}/arches_apps/
 RUN if [ "$USE_LOCAL_APPS" = "true" ]; then \
         . ../ENV/bin/activate && \
         for d in ${WEB_ROOT}/arches_apps/*/; do \
-            pip install --no-deps -e "$d" || true; \
+            git config --global --add safe.directory "$d" || true; \
+            pip install -e "$d" || pip install --no-deps -e "$d" || true; \
         done; \
     fi
 
