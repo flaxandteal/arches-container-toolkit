@@ -77,6 +77,33 @@ Note that, if you wish to scrub generated files, such as `webpack-stats.json`, y
 need to use `sudo git clean -xdf` but **note that command will remove ALL uncommitted
 files and folders in your repository**.
 
+## Local environment setup
+Each arches project will require different setup and environment variables to accomodate this the docker-compose file has been set up to input variable from a .env file within the docker submodule directory.
+
+The compose file will input any variable added into the .env regardless of whether it exists into the compose. This allows you to overwrite any settings within arches that are setup to pull env variables.
+
+An example .env is shown below:
+```
+# Azure account — the single source of truth
+AZURE_ACCOUNT_NAME=add acount name
+AZURE_ACCOUNT_KEY=add account key
+AZURE_CONTAINER=add account container
+AZURE_URL_EXPIRATION_SECS=3600
+
+# Cantaloupe Azure source — reuses the values above
+USE_LOCAL_STORAGE=False
+CANTALOUPE_SOURCE_STATIC=AzureStorageSource
+CANTALOUPE_AZURESTORAGESOURCE_ACCOUNT_NAME=${AZURE_ACCOUNT_NAME}
+CANTALOUPE_AZURESTORAGESOURCE_ACCOUNT_KEY=${AZURE_ACCOUNT_KEY}
+CANTALOUPE_AZURESTORAGESOURCE_CONTAINER_NAME=${AZURE_CONTAINER}
+CANTALOUPE_AZURESTORAGESOURCE_LOOKUP_STRATEGY=BasicLookupStrategy
+
+MAPBOX_API_KEY=add mapbox key
+UPLOADED_FILES_DIR=uploadedfiles
+```
+
+Here we are using an Azure Storage account. The project has been adapted to input these variables. This is not standard and is project specific. If these are removed the local storage will be used.
+
 ## License
 
 Some of the content here is from the AGPL-3.0 Arches project (specifically, adapted
