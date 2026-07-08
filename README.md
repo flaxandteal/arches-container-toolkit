@@ -78,31 +78,26 @@ need to use `sudo git clean -xdf` but **note that command will remove ALL uncomm
 files and folders in your repository**.
 
 ## Local environment setup
-Each arches project will require different setup and environment variables to accomodate this the docker-compose file has been set up to input variable from a .env file within the docker submodule directory.
+All runtime configuration is driven from a single file, `docker/.env`. It is
+loaded once and injected into every arches container (`arches`, `arches_api`,
+`arches_worker` and `cantaloupe`) via a shared `env_file` anchor in
+`docker/docker-compose.yml`, so any variable you add there applies across all
+containers without editing the compose file. Values may reference earlier ones
+with `${VAR}` — this is how Cantaloupe reuses the Azure account settings.
 
-The compose file will input any variable added into the .env regardless of whether it exists into the compose. This allows you to overwrite any settings within arches that are setup to pull env variables.
+`docker/.env` is gitignored (it holds credentials). The minimum setup for
+running locally is just a couple of values:
 
-An example .env is shown below:
-```
-# Azure account — the single source of truth
-AZURE_ACCOUNT_NAME=add acount name
-AZURE_ACCOUNT_KEY=add account key
-AZURE_CONTAINER=add account container
-AZURE_URL_EXPIRATION_SECS=3600
-
-# Cantaloupe Azure source — reuses the values above
-USE_LOCAL_STORAGE=False
-CANTALOUPE_SOURCE_STATIC=AzureStorageSource
-CANTALOUPE_AZURESTORAGESOURCE_ACCOUNT_NAME=${AZURE_ACCOUNT_NAME}
-CANTALOUPE_AZURESTORAGESOURCE_ACCOUNT_KEY=${AZURE_ACCOUNT_KEY}
-CANTALOUPE_AZURESTORAGESOURCE_CONTAINER_NAME=${AZURE_CONTAINER}
-CANTALOUPE_AZURESTORAGESOURCE_LOOKUP_STRATEGY=BasicLookupStrategy
-
-MAPBOX_API_KEY=add mapbox key
+```bash
+# Minimum local setup
 UPLOADED_FILES_DIR=uploadedfiles
+MAPBOX_API_KEY=add mapbox key
 ```
 
-Here we are using an Azure Storage account. The project has been adapted to input these variables. This is not standard and is project specific. If these are removed the local storage will be used.
+To develop against a local, editable copy of arches (mounted from `../arches`)
+rather than the packaged version, also set `EDITABLE_BASE=True` — the image
+build then installs that checkout as an editable dependency. (Likewise
+`USE_LOCAL_APPS=true` uses the local `../arches_apps` checkouts.)
 
 ## License
 
