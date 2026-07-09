@@ -77,6 +77,28 @@ Note that, if you wish to scrub generated files, such as `webpack-stats.json`, y
 need to use `sudo git clean -xdf` but **note that command will remove ALL uncommitted
 files and folders in your repository**.
 
+## Local environment setup
+All runtime configuration is driven from a single file, `docker/.env`. It is
+loaded once and injected into every arches container (`arches`, `arches_api`,
+`arches_worker` and `cantaloupe`) via a shared `env_file` anchor in
+`docker/docker-compose.yml`, so any variable you add there applies across all
+containers without editing the compose file. Values may reference earlier ones
+with `${VAR}` — this is how Cantaloupe reuses the Azure account settings.
+
+`docker/.env` is gitignored (it holds credentials). The minimum setup for
+running locally is just a couple of values:
+
+```bash
+# Minimum local setup
+UPLOADED_FILES_DIR=uploadedfiles
+MAPBOX_API_KEY=add mapbox key
+```
+
+To develop against a local, editable copy of arches (mounted from `../arches`)
+rather than the packaged version, also set `EDITABLE_BASE=True` — the image
+build then installs that checkout as an editable dependency. (Likewise
+`USE_LOCAL_APPS=true` uses the local `../arches_apps` checkouts.)
+
 ## License
 
 Some of the content here is from the AGPL-3.0 Arches project (specifically, adapted
