@@ -145,6 +145,8 @@ setup_arches() {
 	run_migrations
 
 	if [[ "${INSTALL_CORAL_PACKAGE}" == "True" ]]; then
+		echo "Running: python manage.py es setup_indexes"
+		python manage.py es setup_indexes
 		# Import graphs
 		echo "Running: python manage.py packages -o load_package -s coral/pkg/ -y"
 		python manage.py packages -o load_package -s coral/pkg/ -y;
@@ -378,6 +380,9 @@ run_migrations() {
 	python manage.py migrate
 	echo $?
 	echo "[output code]"
+	
+	echo "Running: python manage.py createcachetable"
+	python manage.py createcachetable
 }
 
 collect_static(){
