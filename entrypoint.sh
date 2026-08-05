@@ -263,19 +263,11 @@ run_npm_start() {
 	npm start
 }
 
-write_web_root_tsconfig() {
-	if [[ -f ${APP_FOLDER}/tsconfig.json ]]; then
-		echo "{ \"extends\": \"./${ARCHES_PROJECT}/tsconfig.json\" }" > ${WEB_ROOT}/tsconfig.json
-		echo "Wrote ${WEB_ROOT}/tsconfig.json -> ./${ARCHES_PROJECT}/tsconfig.json"
-	fi
-}
-
 run_npm_build_production() {
 	echo ""
 	echo ""
 	echo "----- RUNNING NPM BUILD PRODUCTION -----"
 	echo ""
-	write_web_root_tsconfig
 	cd_app_folder
 	npm run build_production
 }
@@ -285,7 +277,6 @@ run_npm_build_development() {
 	echo ""
 	echo "----- RUNNING NPM BUILD DEVELOPMENT -----"
 	echo ""
-	write_web_root_tsconfig
 	cd_app_folder
 	npm run build_development
 }
