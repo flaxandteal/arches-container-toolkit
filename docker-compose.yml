@@ -243,7 +243,7 @@ services:
     db:
       # NOTE: due to a race condition, this needs docker-compose run db first to ensure
       # template directory created
-      image: ghcr.io/flaxandteal/arches-postgis:docker-8.2.0a3
+      image: ghcr.io/flaxandteal/arches-postgis:docker-8.1
       volumes:
           - postgres-data:/var/lib/postgresql/data
           - postgres-log:/var/log/postgresql
