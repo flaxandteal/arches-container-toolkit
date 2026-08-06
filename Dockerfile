@@ -16,17 +16,16 @@ RUN . ../ENV/bin/activate \
        django-debug-toolbar django-debug-toolbar-force
 COPY ${ARCHES_PROJECT}/ ${WEB_ROOT}/${ARCHES_PROJECT}/
 ARG EDITABLE_BASE=false
+# arches and the project go in a SINGLE pip invocation so their requirements are
+# resolved together. Installed separately, the project's pins only bound its own
+# resolution — a following arches install re-resolves shared deps without them (pip
+# does not read constraints from already-installed packages), which is how a pinned
+# Django came back. It also clobbered the editable arches, needing a repeat install.
 RUN . ../ENV/bin/activate \
     && pip install --no-cache-dir cachetools websockets pika "protobuf>4.21,<5.0" \
-    && if [ "$EDITABLE_BASE" = "True" ]; then \
-        pip install --no-cache-dir -e ${WEB_ROOT}/arches; \
-    else \
-        pip install --no-cache-dir ${WEB_ROOT}/arches; \
-    fi \
-    && (if [ -f ${WEB_ROOT}/${ARCHES_PROJECT}/pyproject.toml ]; then (cd ${WEB_ROOT}/${ARCHES_PROJECT} && pip install --no-cache-dir -e .); fi) \
-    && if [ "$EDITABLE_BASE" = "True" ]; then \
-        pip install --no-cache-dir -e ${WEB_ROOT}/arches; \
-    fi
+    && if [ "$EDITABLE_BASE" = "True" ]; then ARCHES_SPEC="-e ${WEB_ROOT}/arches"; else ARCHES_SPEC="${WEB_ROOT}/arches"; fi \
+    && if [ -f ${WEB_ROOT}/${ARCHES_PROJECT}/pyproject.toml ]; then PROJECT_SPEC="-e ${WEB_ROOT}/${ARCHES_PROJECT}"; else PROJECT_SPEC=""; fi \
+    && pip install --no-cache-dir $ARCHES_SPEC $PROJECT_SPEC
 
 ARG USE_LOCAL_APPS=false
 COPY arches_app[s]/ ${WEB_ROOT}/arches_apps/
