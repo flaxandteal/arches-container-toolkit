@@ -145,6 +145,8 @@ setup_arches() {
 	run_migrations
 
 	if [[ "${INSTALL_CORAL_PACKAGE}" == "True" ]]; then
+		echo "Running: python manage.py es setup_indexes"
+		python manage.py es setup_indexes
 		# Import graphs
 		echo "Running: python manage.py packages -o load_package -s coral/pkg/ -y"
 		python manage.py packages -o load_package -s coral/pkg/ -y;
@@ -388,6 +390,9 @@ run_migrations() {
 	python manage.py migrate
 	echo $?
 	echo "[output code]"
+	
+	echo "Running: python manage.py createcachetable"
+	python manage.py createcachetable
 }
 
 collect_static(){
@@ -505,7 +510,17 @@ install_arches_apps() {
 
 	for d in "${ARCHES_APPS_DIR}"/*; do
 		if [[ -d "$d" ]]; then
-			pip install --no-deps -e "$d" || pip install -e "$d" || true
+			# These apps are bind-mounted from the host, so they are owned by the
+			# host UID rather than the container user. Git's "dubious ownership"
+			# guard then blocks the VCS-versioning build backend from reading the
+			# version, failing the editable build. Mark each app safe first.
+			git config --global --add safe.directory "$d" || true
+			# Try a full editable install first so the app's third-party deps
+			# (e.g. jinja2, docxtpl for certificate-generator) get installed.
+			# The already-installed arches satisfies every app's constraint, so
+			# pip leaves it alone. Fall back to --no-deps only if resolution
+			# fails (e.g. an unsatisfiable arches-* pin).
+			pip install -e "$d" || pip install --no-deps -e "$d" || true
 			echo "Installed $d"
 		fi
 	done

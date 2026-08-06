@@ -1,4 +1,4 @@
-ARG ARCHES_BASE=ghcr.io/flaxandteal/arches-base:docker-8.2.0a3
+ARG ARCHES_BASE=ghcr.io/flaxandteal/arches-base:docker-8.2.0a4-v3
 FROM $ARCHES_BASE
 
 ARG ARCHES_PROJECT
@@ -32,7 +32,8 @@ COPY arches_app[s]/ ${WEB_ROOT}/arches_apps/
 RUN if [ "$USE_LOCAL_APPS" = "true" ]; then \
         . ../ENV/bin/activate && \
         for d in ${WEB_ROOT}/arches_apps/*/; do \
-            pip install --no-cache-dir --no-deps -e "$d" || true; \
+            git config --global --add safe.directory "$d" || true; \
+            pip install --no-cache-dir -e "$d" || pip install --no-cache-dir --no-deps -e "$d" || true; \
         done; \
     fi
 
@@ -40,6 +41,7 @@ RUN mkdir -p ${WEB_ROOT}/${ARCHES_PROJECT}/${ARCHES_PROJECT}/uploadedfiles && ch
 
 COPY ${ARCHES_PROJECT}/docker/settings_docker.py ${WEB_ROOT}/${ARCHES_PROJECT}/${ARCHES_PROJECT}/settings_local.py
 RUN echo '{"status": "", "assets": {}, "chunks": {}, "publicPath": "/static/"}' > ${WEB_ROOT}/${ARCHES_PROJECT}/webpack/webpack-stats.json
+RUN printf '{"extends": "./%s/tsconfig.json"}' "${ARCHES_PROJECT}" > ${WEB_ROOT}/tsconfig.json
 
 WORKDIR ${WEB_ROOT}/${ARCHES_PROJECT}/${ARCHES_PROJECT}
 RUN mkdir -p /static_root && chown -R 1000 /static_root

@@ -1,12 +1,30 @@
+# Set-once, apply-everywhere. This anchor pulls docker/.env into a service, so EVERY
+# variable defined there is injected into the container environment
+x-arches-env: &arches-env
+  env_file:
+    - path: .env
+      required: false
+
 services:
     cantaloupe:
+      <<: *arches-env
       image: uclalibrary/cantaloupe:5.0.3-0
       volumes:
-        - cantaloupe-data:/imageroot
+        - ${CANTALOUPE_IMAGEROOT:-${ARCHES_PROJECT_ROOT}${ARCHES_PROJECT}/uploadedfiles}:/imageroot
+        - cantaloupe-cache:/var/cache/cantaloupe
       ports:
         - 8182:8182
+      environment:
+        # Storage backend: FilesystemSource (default) | AzureStorageSource | S3Source | HttpSource
+        - CANTALOUPE_SOURCE_STATIC=${CANTALOUPE_SOURCE_STATIC:-FilesystemSource}
+        - CANTALOUPE_FILESYSTEMSOURCE_LOOKUP_STRATEGY=BasicLookupStrategy
+        - CANTALOUPE_FILESYSTEMSOURCE_BASICLOOKUPSTRATEGY_PATH_PREFIX=${CANTALOUPE_FS_PATH_PREFIX:-/imageroot/}
+        - CANTALOUPE_CACHE_SERVER_DERIVATIVE_ENABLED=${CANTALOUPE_CACHE_SERVER_DERIVATIVE_ENABLED:-true}
+        - CANTALOUPE_CACHE_SERVER_DERIVATIVE=FilesystemCache
+        - CANTALOUPE_FILESYSTEMCACHE_PATHNAME=/var/cache/cantaloupe
 
     arches:
+      <<: *arches-env
       user: root
       restart: unless-stopped
       entrypoint: ["../entrypoint.sh"]
@@ -16,7 +34,7 @@ services:
         args:
           - ARCHES_PROJECT=$ARCHES_PROJECT
           - ARCHES_BASE=$ARCHES_BASE
-          - EDITABLE_BASE=False
+          - EDITABLE_BASE=${EDITABLE_BASE:-false}
           - USE_LOCAL_APPS=${USE_LOCAL_APPS:-false}
       command: run_arches
       volumes:
@@ -60,6 +78,7 @@ services:
         - COMPRESS_ENABLED=False
         - WEB_ROOT=/web_root
         - WEBPACK_DEVELOPMENT_SERVER_PORT=9000
+        - MAPBOX_API_KEY=${MAPBOX_API_KEY:-}
         - USE_LOCAL_APPS=${USE_LOCAL_APPS:-false}
 
       ports:
@@ -80,6 +99,7 @@ services:
       volumes:
         - ${ARCHES_PROJECT_ROOT}:/local_root
       environment:
+        - MAPBOX_API_KEY=${MAPBOX_API_KEY:-}
         - ARCHES_PROJECT=$ARCHES_PROJECT
         - INSTALL_DEFAULT_GRAPHS=False
         - INSTALL_DEFAULT_CONCEPTS=False
@@ -98,6 +118,7 @@ services:
         - TZ=PST
 
     arches_api:
+      <<: *arches-env
       profiles: ["api"]
       image: arches_${ARCHES_PROJECT}:latest
       restart: unless-stopped
@@ -159,6 +180,7 @@ services:
           condition: service_started
 
     arches_worker:
+      <<: *arches-env
       image: arches_${ARCHES_PROJECT}:latest
       restart: unless-stopped
       entrypoint: ["../entrypoint.sh"]
@@ -168,7 +190,7 @@ services:
         args:
           - ARCHES_PROJECT=$ARCHES_PROJECT
           - ARCHES_BASE=$ARCHES_BASE
-          - EDITABLE_BASE=False
+          - EDITABLE_BASE=${EDITABLE_BASE:-false}
           - USE_LOCAL_APPS=${USE_LOCAL_APPS:-false}
       command: run_celery
       user: root
@@ -181,6 +203,7 @@ services:
         - ${ARCHES_PROJECT_ROOT}./../arches:/web_root/arches
         - ${ARCHES_PROJECT_ROOT}./../arches_apps:/web_root/arches_apps
       environment:
+        - MAPBOX_API_KEY=${MAPBOX_API_KEY:-}
         - ARCHES_PROJECT=$ARCHES_PROJECT
         - INSTALL_DEFAULT_GRAPHS=False
         - INSTALL_DEFAULT_CONCEPTS=False
@@ -292,3 +315,4 @@ volumes:
     postgres-data:
     elasticsearch-data:
     cantaloupe-data:
+    cantaloupe-cache:
