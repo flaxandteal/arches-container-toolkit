@@ -279,7 +279,9 @@ run_npm_build_production() {
 	echo "----- RUNNING NPM BUILD PRODUCTION -----"
 	echo ""
 	cd_app_folder
-	npm run build_production
+	# Terser needs more headroom than Node's default heap. Overridable, so a
+	# constrained runner can lower it rather than meeting the OOM killer.
+	NODE_OPTIONS="${NODE_OPTIONS:---max_old_space_size=8192}" npm run build_production
 }
 
 run_npm_build_development() {
