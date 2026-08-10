@@ -95,6 +95,83 @@ bootstrap() {
 }
 
 
+# Run a manage.py subcommand, aborting the whole run if it fails. Without this
+# a failed setup step is invisible: the database ends up migrated but empty,
+# which looks like a working install until you notice there are no system
+# settings and no graphs.
+run_manage() {
+	echo "Running: python manage.py $*"
+	cd_app_folder
+	if ! python ${APP_FOLDER}/manage.py "$@"; then
+		echo ""
+		echo "*** FAILED: manage.py $* ***"
+		echo "*** Aborting so a half-built database is not mistaken for a good one ***"
+		exit 1
+	fi
+}
+
+psql_maintenance() {
+	psql --host=${PGHOST} --port=${PGPORT} --user=${PGUSERNAME} --dbname=postgres -v ON_ERROR_STOP=1 -c "$1"
+}
+
+# Do the destructive part from psql rather than from inside Django.
+#
+# setup_db performs the whole rebuild in a single Django process: it terminates
+# every backend on the database, drops and recreates it, then carries on using
+# the ORM and finally calls migrate. Anything an app sets up at startup or on
+# first import therefore straddles the rebuild, and there are two ways that
+# bites:
+#
+#   * an AppConfig.ready() that opens a connection (casbin_adapter does) has
+#     that connection killed by the terminate, so the next ORM call raises
+#     InterfaceError rather than the ProgrammingError arches guards against;
+#   * importing a permission framework can register models belonging to an app
+#     with no migrations, and the in-process migrate then dies with
+#     InvalidBasesError.
+#
+# Dropping the database before any Django process starts means nothing can be
+# holding a connection, and running each remaining step as its own manage.py
+# invocation means no step can poison the next one.
+recreate_database() {
+	local template=${PGDBTEMPLATE:-template_postgis}
+	echo "Dropping and recreating database ${PGDBNAME} from template ${template}..."
+	psql_maintenance "DROP DATABASE IF EXISTS ${PGDBNAME} WITH (FORCE);"
+	psql_maintenance "CREATE DATABASE ${PGDBNAME} WITH OWNER = ${PGUSERNAME} ENCODING = 'UTF8' TEMPLATE = ${template};"
+}
+
+# The step-by-step equivalent of 'manage.py setup_db --force'.
+setup_db() {
+	recreate_database
+
+	local system_settings_dir system_settings_local
+	# Read from Django rather than hardcoding, so this follows whatever arches
+	# install and project settings are actually in use.
+	system_settings_dir=$(cd ${APP_FOLDER} && python -c "
+import os
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', '${ARCHES_PROJECT:-arches}.settings')
+from django.conf import settings
+print(os.path.join(settings.ROOT_DIR, 'db', 'system_settings'))
+" | tail -n 1)
+	system_settings_local=$(cd ${APP_FOLDER} && python -c "
+import os
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', '${ARCHES_PROJECT:-arches}.settings')
+from django.conf import settings
+print(settings.SYSTEM_SETTINGS_LOCAL_PATH)
+" | tail -n 1)
+
+	run_manage migrate
+	run_manage createcachetable
+	run_manage es delete_indexes
+	run_manage es setup_indexes
+	run_manage packages -o import_graphs -s "${system_settings_dir}/Arches_System_Settings_Model.json"
+	run_manage graph publish
+	run_manage packages -o import_business_data -s "${system_settings_dir}/Arches_System_Settings.json" -ow overwrite
+
+	if [[ -f "${system_settings_local}" ]]; then
+		run_manage packages -o import_business_data -s "${system_settings_local}" -ow overwrite
+	fi
+}
+
 # Setup Postgresql and Elasticsearch
 setup_arches() {
 
@@ -108,8 +185,7 @@ setup_arches() {
 
 	echo "5" && sleep 10 && echo "4" && sleep 1 && echo "3" && sleep 1 && echo "2" && sleep 1 &&	echo "1" &&	sleep 1 && echo "0" && echo ""
 
-	echo "Running: python manage.py setup_db --force"
-	python ${APP_FOLDER}/manage.py setup_db --force
+	setup_db
 
 
 	if [[ "${INSTALL_DEFAULT_GRAPHS}" == "True" ]]; then
@@ -144,13 +220,11 @@ setup_arches() {
 
 	run_migrations
 
-	if [[ "${INSTALL_CORAL_PACKAGE}" == "True" ]]; then
-		echo "Running: python manage.py es setup_indexes"
-		python manage.py es setup_indexes
+	if [[ "${INSTALL_PACKAGE}" == "True" ]]; then
+		run_manage es setup_indexes
 		# Import graphs
-		echo "Running: python manage.py packages -o load_package -s coral/pkg/ -y"
-		python manage.py packages -o load_package -s coral/pkg/ -y;
-		python manage.py es index_database
+		run_manage packages -o load_package -s ${ARCHES_PROJECT}/pkg/ -y
+		run_manage es index_database
 	fi
 }
 

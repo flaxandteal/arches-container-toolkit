@@ -52,6 +52,7 @@ services:
         - ARCHES_PROJECT=$ARCHES_PROJECT
         - INSTALL_DEFAULT_GRAPHS=False
         - INSTALL_DEFAULT_CONCEPTS=False
+        - INSTALL_PACKAGE=${INSTALL_PACKAGE:-False}
         - PGUSERNAME=postgres
         - PGPASSWORD=postgres
         - PGDBNAME=arches
@@ -207,6 +208,7 @@ services:
         - ARCHES_PROJECT=$ARCHES_PROJECT
         - INSTALL_DEFAULT_GRAPHS=False
         - INSTALL_DEFAULT_CONCEPTS=False
+        - INSTALL_PACKAGE=${INSTALL_PACKAGE:-True}
         - PGUSERNAME=postgres
         - PGPASSWORD=postgres
         - PGDBNAME=arches
