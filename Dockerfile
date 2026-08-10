@@ -1,4 +1,4 @@
-ARG ARCHES_BASE=ghcr.io/flaxandteal/arches-base:docker-8.2.0a4-v3
+ARG ARCHES_BASE=ghcr.io/flaxandteal/arches-base:v8.2.0a8-v1
 FROM $ARCHES_BASE
 
 ARG ARCHES_PROJECT
