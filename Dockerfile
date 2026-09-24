@@ -1,12 +1,12 @@
 ARG ARCHES_BASE=ghcr.io/flaxandteal/arches-base:v8.2.0a8-v1
-FROM $ARCHES_BASE
+FROM $ARCHES_BASE AS builder
 
 ARG ARCHES_PROJECT
 ENV ARCHES_PROJECT $ARCHES_PROJECT
 COPY ${ARCHES_PROJECT}/docker/entrypoint.sh ${WEB_ROOT}/
 RUN chgrp 1000 ../entrypoint.sh && chmod g+rx ../entrypoint.sh
 RUN apt-get update && apt-get -y install --no-install-recommends \
-    python3-libxml2 git build-essential python3-dev xmlsec1 \
+    python3-libxml2 git build-essential python3-dev xmlsec1 libpq-dev \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 RUN . ../ENV/bin/activate \
@@ -70,6 +70,47 @@ RUN rm -rf ${WEB_ROOT}/${ARCHES_PROJECT}/node_modules \
 # root, leaving them unwritable by the container's runtime user (1000) and
 # breaking generate_frontend_configuration() on every startup.
 RUN chown -R 1000 ${WEB_ROOT}/${ARCHES_PROJECT}/frontend_configuration
+
+# --------------------------------------------------------------------------
+# Runtime stage - deliberately does not install build-essential/python3-dev.
+# Those pulled in linux-libc-dev (kernel headers) transitively via
+# libc6-dev, which was the single largest source of CRITICAL CVEs on this
+# image (ECR scan: 79/119 CRITICAL findings; Trivy: 21/21 CRITICAL
+# findings, all linux-libc-dev). Neither the compiler toolchain nor kernel
+# headers are needed once the app and its C-extension deps are built.
+# --------------------------------------------------------------------------
+FROM $ARCHES_BASE
+
+ARG ARCHES_PROJECT
+ENV ARCHES_PROJECT $ARCHES_PROJECT
+
+# Requires an ARCHES_BASE built from arches's fat_dev/8.2.x Dockerfile fix
+# that swaps libgdal-dev for the runtime-only GDAL/GEOS/PROJ libs (no longer
+# ships libgdal-dev/libpq-dev at all) - bump the ARG above once that base
+# image is published, or this just installs the runtime libs on top of
+# whatever the base already has, without clearing the -dev packages' CVEs.
+#
+# Installs the runtime libs Django GIS (ctypes) and psycopg2-binary need,
+# plus pending Ubuntu security updates (curl, perl, glibc, openssl, glib
+# were flagged CRITICAL by ECR/Trivy on the old base). Package names are
+# specific to Ubuntu 24.04 (noble).
+#
+# python3-libxml2: runtime XML bindings. xmlsec1: XML signing (e.g. SAML).
+# git: entrypoint.sh shells out to it at container startup when
+# USE_LOCAL_APPS=true (live-mounted arches_apps), so it's a runtime dep,
+# not just a build-time one.
+RUN apt-get update \
+    && DEBIAN_FRONTEND=noninteractive apt-get upgrade -y \
+    && apt-get -y install --no-install-recommends \
+    python3-libxml2 git xmlsec1 libgdal34t64 libgeos-c1t64 libproj25 libpq5 \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN rm -rf ${WEB_ROOT}
+COPY --from=builder ${WEB_ROOT} ${WEB_ROOT}
+COPY --from=builder /static_root /static_root
+
+WORKDIR ${WEB_ROOT}/${ARCHES_PROJECT}
 ENTRYPOINT ["../entrypoint.sh"]
 CMD ["run_arches"]
 USER 1000
