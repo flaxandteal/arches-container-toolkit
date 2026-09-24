@@ -1,5 +1,5 @@
 ARG ARCHES_BASE=ghcr.io/flaxandteal/arches-base:v8.2.0a8-v1
-FROM $ARCHES_BASE
+FROM $ARCHES_BASE AS builder
 
 ARG ARCHES_PROJECT
 ENV ARCHES_PROJECT $ARCHES_PROJECT
@@ -46,7 +46,7 @@ RUN printf '{"extends": "./%s/tsconfig.json"}' "${ARCHES_PROJECT}" > ${WEB_ROOT}
 
 WORKDIR ${WEB_ROOT}/${ARCHES_PROJECT}/${ARCHES_PROJECT}
 RUN mkdir -p /static_root && chown -R 1000 /static_root
-RUN mkdir -p ${WEB_ROOT}/${ARCHES_PROJECT}/frontend_configuration && chown -R 1000 ${WEB_ROOT}/${ARCHES_PROJECT}/frontend_configuration
+RUN mkdir -p ${WEB_ROOT}/${ARCHES_PROJECT}/frontend_configuration
 WORKDIR ${WEB_ROOT}/${ARCHES_PROJECT}
 RUN ../entrypoint.sh install_npm_components \
     && npm cache clean --force \
@@ -64,6 +64,39 @@ RUN rm -rf ${WEB_ROOT}/${ARCHES_PROJECT}/node_modules \
            /root/.cache/pip /root/.npm /tmp/* \
     && find ${WEB_ROOT} -type d -name __pycache__ -prune -exec rm -rf {} + || true
 
+# install_npm_components/run_npm_build_development (still root here) write
+# webpack/tsconfig output into frontend_configuration, so it must be chowned
+# after they run - doing it before let those steps re-create the files as
+# root, leaving them unwritable by the container's runtime user (1000) and
+# breaking generate_frontend_configuration() on every startup.
+RUN chown -R 1000 ${WEB_ROOT}/${ARCHES_PROJECT}/frontend_configuration
+
+# --------------------------------------------------------------------------
+# Runtime stage - deliberately does not install build-essential/python3-dev.
+# Those pulled in linux-libc-dev (kernel headers) transitively via
+# libc6-dev, which was the single largest source of CRITICAL CVEs on this
+# image (ECR scan: 79/119 CRITICAL findings; Trivy: 21/21 CRITICAL
+# findings, all linux-libc-dev). Neither the compiler toolchain nor kernel
+# headers are needed once the app and its C-extension deps are built.
+# --------------------------------------------------------------------------
+FROM $ARCHES_BASE
+
+ARG ARCHES_PROJECT
+ENV ARCHES_PROJECT $ARCHES_PROJECT
+
+# python3-libxml2: runtime XML bindings. xmlsec1: XML signing (e.g. SAML).
+# git: entrypoint.sh shells out to it at container startup when
+# USE_LOCAL_APPS=true (live-mounted arches_apps), so it's a runtime dep,
+# not just a build-time one.
+RUN apt-get update && apt-get -y install --no-install-recommends \
+    python3-libxml2 git xmlsec1 \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY --from=builder ${WEB_ROOT} ${WEB_ROOT}
+COPY --from=builder /static_root /static_root
+
+WORKDIR ${WEB_ROOT}/${ARCHES_PROJECT}
 ENTRYPOINT ["../entrypoint.sh"]
 CMD ["run_arches"]
 USER 1000
