@@ -72,6 +72,12 @@ COPY ./${ARCHES_PROJECT}/settings.py ${WEB_ROOT}/${ARCHES_PROJECT}/${ARCHES_PROJ
 #RUN echo $WEB_ROOT "|" $ARCHES_PROJECT && rm -f ${WEB_ROOT}/${ARCHES_PROJECT}/.frontend-configuration-settings.json && /bin/bash -c ". ../ENV/bin/activate; python manage.py check" && cat ${WEB_ROOT}/${ARCHES_PROJECT}/.frontend-configuration-settings.json
 RUN /bin/bash -c ". ../ENV/bin/activate; python -c 'import django; django.setup()'"
 RUN echo $WEB_ROOT "|" $ARCHES_PROJECT && ${WEB_ROOT}/entrypoint.sh run_npm_build_${ARCHES_ENVIRONMENT}
+# run_npm_build_${ARCHES_ENVIRONMENT} runs as root (USER 0 above) and
+# regenerates frontend_configuration, so it must be chowned back to the
+# runtime uid (1000) before it's copied into the nginx stage below - COPY
+# preserves source ownership, so without this the final image ships those
+# files as root, unwritable by the container's actual runtime user.
+RUN chown -R 1000 ${WEB_ROOT}/${ARCHES_PROJECT}/frontend_configuration
 # Seeds STATIC_ROOT from arches-base's pre-baked static if present, else does a
 # full collect (older bases). Logic lives in entrypoint.sh:collect_static_baked.
 

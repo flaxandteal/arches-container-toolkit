@@ -46,7 +46,7 @@ RUN printf '{"extends": "./%s/tsconfig.json"}' "${ARCHES_PROJECT}" > ${WEB_ROOT}
 
 WORKDIR ${WEB_ROOT}/${ARCHES_PROJECT}/${ARCHES_PROJECT}
 RUN mkdir -p /static_root && chown -R 1000 /static_root
-RUN mkdir -p ${WEB_ROOT}/${ARCHES_PROJECT}/frontend_configuration && chown -R 1000 ${WEB_ROOT}/${ARCHES_PROJECT}/frontend_configuration
+RUN mkdir -p ${WEB_ROOT}/${ARCHES_PROJECT}/frontend_configuration
 WORKDIR ${WEB_ROOT}/${ARCHES_PROJECT}
 RUN ../entrypoint.sh install_npm_components \
     && npm cache clean --force \
@@ -64,6 +64,12 @@ RUN rm -rf ${WEB_ROOT}/${ARCHES_PROJECT}/node_modules \
            /root/.cache/pip /root/.npm /tmp/* \
     && find ${WEB_ROOT} -type d -name __pycache__ -prune -exec rm -rf {} + || true
 
+# install_npm_components/run_npm_build_development (still root here) write
+# webpack/tsconfig output into frontend_configuration, so it must be chowned
+# after they run - doing it before let those steps re-create the files as
+# root, leaving them unwritable by the container's runtime user (1000) and
+# breaking generate_frontend_configuration() on every startup.
+RUN chown -R 1000 ${WEB_ROOT}/${ARCHES_PROJECT}/frontend_configuration
 ENTRYPOINT ["../entrypoint.sh"]
 CMD ["run_arches"]
 USER 1000
