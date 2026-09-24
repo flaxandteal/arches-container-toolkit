@@ -84,25 +84,25 @@ FROM $ARCHES_BASE
 ARG ARCHES_PROJECT
 ENV ARCHES_PROJECT $ARCHES_PROJECT
 
-# The base image installs libgdal-dev/libpq-dev in its runtime stage, which
-# drag in libc6-dev and linux-libc-dev, so dropping build-essential alone
-# doesn't clear the kernel-header CVEs. Keep the shared libraries GDAL/GEOS
-# (Django GIS) and psycopg2 load at runtime, purge the -dev packages and
-# their now-unneeded deps, then pull in pending Ubuntu security updates
-# (curl, perl, glibc, openssl, glib were all flagged CRITICAL by ECR).
-# The pinned library names are specific to Ubuntu 24.04 (noble).
+# Requires an ARCHES_BASE built from arches's fat_dev/8.2.x Dockerfile fix
+# that swaps libgdal-dev for the runtime-only GDAL/GEOS/PROJ libs (no longer
+# ships libgdal-dev/libpq-dev at all) - bump the ARG above once that base
+# image is published, or this just installs the runtime libs on top of
+# whatever the base already has, without clearing the -dev packages' CVEs.
+#
+# Installs the runtime libs Django GIS (ctypes) and psycopg2-binary need,
+# plus pending Ubuntu security updates (curl, perl, glibc, openssl, glib
+# were flagged CRITICAL by ECR/Trivy on the old base). Package names are
+# specific to Ubuntu 24.04 (noble).
 #
 # python3-libxml2: runtime XML bindings. xmlsec1: XML signing (e.g. SAML).
 # git: entrypoint.sh shells out to it at container startup when
 # USE_LOCAL_APPS=true (live-mounted arches_apps), so it's a runtime dep,
 # not just a build-time one.
 RUN apt-get update \
-    && apt-mark manual libgdal34t64 libgeos-c1t64 libproj25 libpq5 \
-    && DEBIAN_FRONTEND=noninteractive apt-get purge -y libgdal-dev libpq-dev \
-    && DEBIAN_FRONTEND=noninteractive apt-get autoremove -y --purge \
     && DEBIAN_FRONTEND=noninteractive apt-get upgrade -y \
     && apt-get -y install --no-install-recommends \
-    python3-libxml2 git xmlsec1 \
+    python3-libxml2 git xmlsec1 libgdal34t64 libgeos-c1t64 libproj25 \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
