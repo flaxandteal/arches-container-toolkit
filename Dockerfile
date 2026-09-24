@@ -84,11 +84,24 @@ FROM $ARCHES_BASE
 ARG ARCHES_PROJECT
 ENV ARCHES_PROJECT $ARCHES_PROJECT
 
+# The base image installs libgdal-dev/libpq-dev in its runtime stage, which
+# drag in libc6-dev and linux-libc-dev, so dropping build-essential alone
+# doesn't clear the kernel-header CVEs. Keep the shared libraries GDAL/GEOS
+# (Django GIS) and psycopg2 load at runtime, purge the -dev packages and
+# their now-unneeded deps, then pull in pending Ubuntu security updates
+# (curl, perl, glibc, openssl, glib were all flagged CRITICAL by ECR).
+# The pinned library names are specific to Ubuntu 24.04 (noble).
+#
 # python3-libxml2: runtime XML bindings. xmlsec1: XML signing (e.g. SAML).
 # git: entrypoint.sh shells out to it at container startup when
 # USE_LOCAL_APPS=true (live-mounted arches_apps), so it's a runtime dep,
 # not just a build-time one.
-RUN apt-get update && apt-get -y install --no-install-recommends \
+RUN apt-get update \
+    && apt-mark manual libgdal34t64 libgeos-c1t64 libproj25 libpq5 \
+    && DEBIAN_FRONTEND=noninteractive apt-get purge -y libgdal-dev libpq-dev \
+    && DEBIAN_FRONTEND=noninteractive apt-get autoremove -y --purge \
+    && DEBIAN_FRONTEND=noninteractive apt-get upgrade -y \
+    && apt-get -y install --no-install-recommends \
     python3-libxml2 git xmlsec1 \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
