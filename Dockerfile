@@ -6,7 +6,7 @@ ENV ARCHES_PROJECT $ARCHES_PROJECT
 COPY ${ARCHES_PROJECT}/docker/entrypoint.sh ${WEB_ROOT}/
 RUN chgrp 1000 ../entrypoint.sh && chmod g+rx ../entrypoint.sh
 RUN apt-get update && apt-get -y install --no-install-recommends \
-    python3-libxml2 git build-essential python3-dev xmlsec1 \
+    python3-libxml2 git build-essential python3-dev xmlsec1 libpq-dev \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 RUN . ../ENV/bin/activate \
@@ -102,10 +102,11 @@ ENV ARCHES_PROJECT $ARCHES_PROJECT
 RUN apt-get update \
     && DEBIAN_FRONTEND=noninteractive apt-get upgrade -y \
     && apt-get -y install --no-install-recommends \
-    python3-libxml2 git xmlsec1 libgdal34t64 libgeos-c1t64 libproj25 \
+    python3-libxml2 git xmlsec1 libgdal34t64 libgeos-c1t64 libproj25 libpq5 \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
+RUN rm -rf ${WEB_ROOT}
 COPY --from=builder ${WEB_ROOT} ${WEB_ROOT}
 COPY --from=builder /static_root /static_root
 
