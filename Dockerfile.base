@@ -111,6 +111,12 @@ RUN . ../ENV/bin/activate \
     && pip install --no-cache-dir -e . --group dev \
     && rm -rf /root/.cache/pip
 
+# The app only ever uses the venv's own pip (see entrypoint.sh activate_virtualenv).
+# Purge the system apt pip/wheel packages so their CVEs stop showing up in image scans.
+RUN apt-get purge -y python3-pip python3-pip-whl python3-wheel \
+    && apt-get autoremove -y \
+    && rm -rf /var/lib/apt/lists/*
+
 COPY docker/gunicorn_config.py ${ARCHES_ROOT}/gunicorn_config.py
 COPY docker/settings_local.py ${ARCHES_ROOT}/arches/settings_local.py
 
