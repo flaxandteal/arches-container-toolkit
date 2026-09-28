@@ -6,7 +6,7 @@ ENV ARCHES_PROJECT $ARCHES_PROJECT
 COPY ${ARCHES_PROJECT}/docker/entrypoint.sh ${WEB_ROOT}/
 RUN chgrp 1000 ../entrypoint.sh && chmod g+rx ../entrypoint.sh
 RUN apt-get update && apt-get -y install --no-install-recommends \
-    python3-libxml2 git build-essential python3-dev xmlsec1 \
+    python3-libxml2 git build-essential python3-dev xmlsec1 libpq-dev \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 RUN . ../ENV/bin/activate \
