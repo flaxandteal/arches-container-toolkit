@@ -1,5 +1,6 @@
-ARG ARCHES_BASE=ghcr.io/flaxandteal/arches-base:v8.2.0a8-v1
-FROM $ARCHES_BASE AS builder
+ARG ARCHES_BASE=ghcr.io/flaxandteal/arches-base:v8.2.0a8-v3
+FROM $ARCHES_BASE
+
 
 ARG ARCHES_PROJECT
 ENV ARCHES_PROJECT $ARCHES_PROJECT
