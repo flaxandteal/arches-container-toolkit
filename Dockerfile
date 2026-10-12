@@ -38,7 +38,11 @@ RUN if [ "$USE_LOCAL_APPS" = "true" ]; then \
         done; \
     fi
 
-RUN mkdir -p ${WEB_ROOT}/${ARCHES_PROJECT}/${ARCHES_PROJECT}/uploadedfiles && chgrp -R 1000 ${WEB_ROOT}/${ARCHES_PROJECT}/${ARCHES_PROJECT}/uploadedfiles && chmod -R g+rw ${WEB_ROOT}/${ARCHES_PROJECT}/${ARCHES_PROJECT}/uploadedfiles
+RUN for d in uploadedfiles export_deliverables; do \
+        mkdir -p ${WEB_ROOT}/${ARCHES_PROJECT}/${ARCHES_PROJECT}/$d && \
+        chgrp -R 1000 ${WEB_ROOT}/${ARCHES_PROJECT}/${ARCHES_PROJECT}/$d && \
+        chmod -R g+rws ${WEB_ROOT}/${ARCHES_PROJECT}/${ARCHES_PROJECT}/$d; \
+    done
 
 COPY ${ARCHES_PROJECT}/docker/settings_docker.py ${WEB_ROOT}/${ARCHES_PROJECT}/${ARCHES_PROJECT}/settings_local.py
 RUN echo '{"status": "", "assets": {}, "chunks": {}, "publicPath": "/static/"}' > ${WEB_ROOT}/${ARCHES_PROJECT}/webpack/webpack-stats.json
