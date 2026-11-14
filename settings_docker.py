@@ -1,6 +1,12 @@
 import os
 from arches.settings import ELASTICSEARCH_HOSTS, DATABASES
-from arches.settings_docker import *
+# Env-driven settings. Every arches-base image has arches/settings_local.py
+# (Dockerfile.base); arches/settings_docker.py was dropped by Arches 8.2.0a2x
+from arches.settings_local import *
+
+CANTALOUPE_HTTP_ENDPOINT = "http://{}:{}".format(
+    os.getenv("CANTALOUPE_HOST", "cantaloupe"), os.getenv("CANTALOUPE_PORT", "8182")
+)
 
 ALLOWED_HOSTS = ["localhost", "*"]  # get_env_variable("DOMAIN_NAMES").split()
 
