@@ -110,6 +110,25 @@ run_manage() {
 	fi
 }
 
+# Arches 8.2 can run without Elasticsearch (settings.ELASTICSEARCH_ENABLED =
+# False, e.g. with a PostgreSQL-backed search app). The project's settings
+# should read the same ELASTICSEARCH_ENABLED env var; when it's off, skip
+# waiting for ES and every 'manage.py es' step, which then refuses to run.
+es_enabled() {
+	case "${ELASTICSEARCH_ENABLED:-True}" in
+		False|false|0|no|No) return 1 ;;
+		*) return 0 ;;
+	esac
+}
+
+run_es() {
+	if es_enabled; then
+		run_manage es "$@"
+	else
+		echo "Skipping: python manage.py es $* (ELASTICSEARCH_ENABLED=${ELASTICSEARCH_ENABLED})"
+	fi
+}
+
 psql_maintenance() {
 	psql --host=${PGHOST} --port=${PGPORT} --user=${PGUSERNAME} --dbname=postgres -v ON_ERROR_STOP=1 -c "$1"
 }
@@ -161,8 +180,8 @@ print(settings.SYSTEM_SETTINGS_LOCAL_PATH)
 
 	run_manage migrate
 	run_manage createcachetable
-	run_manage es delete_indexes
-	run_manage es setup_indexes
+	run_es delete_indexes
+	run_es setup_indexes
 	run_manage packages -o import_graphs -s "${system_settings_dir}/Arches_System_Settings_Model.json"
 	run_manage graph publish
 	run_manage packages -o import_business_data -s "${system_settings_dir}/Arches_System_Settings.json" -ow overwrite
@@ -221,10 +240,10 @@ setup_arches() {
 	run_migrations
 
 	if [[ "${INSTALL_PACKAGE}" == "True" ]]; then
-		run_manage es setup_indexes
+		run_es setup_indexes
 		# Import graphs
 		run_manage packages -o load_package -s ${ARCHES_PROJECT}/pkg/ -y
-		run_manage es index_database
+		run_es index_database
 	fi
 }
 
@@ -239,12 +258,16 @@ wait_for_db() {
 		echo "Database server is up"
 	) &
 
-	(
-		while ! curl -sf "http://${ESHOST}:${ESPORT}/_cluster/health?wait_for_status=yellow&timeout=60s" &>/dev/null; do
-			sleep 1
-		done
-		echo "Elasticsearch is up"
-	) &
+	if es_enabled; then
+		(
+			while ! curl -sf "http://${ESHOST}:${ESPORT}/_cluster/health?wait_for_status=yellow&timeout=60s" &>/dev/null; do
+				sleep 1
+			done
+			echo "Elasticsearch is up"
+		) &
+	else
+		echo "Elasticsearch disabled (ELASTICSEARCH_ENABLED=${ELASTICSEARCH_ENABLED}), not waiting for it"
+	fi
 
 	wait
 	echo "All services are ready"
